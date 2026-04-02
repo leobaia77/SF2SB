@@ -318,104 +318,173 @@ body{
 
 /* ─── MOBILE LAYOUT (≤767px) ──────────────────────────────── */
 @media(max-width:767px){
-  :root{--hdr:54px;--bot:0px;}
+  :root{--hdr:48px;--bot:0px;--tabs:42px;}
 
   body{overflow:auto;}
   #app{height:auto;overflow:visible;}
 
-  /* Header compact */
-  #hdr{padding:0 14px;height:var(--hdr);}
-  .h-title{font-size:16px;}
-  .h-sub{font-size:7px;}
-  .h-st{padding:0 10px;min-width:50px;}
-  .h-v{font-size:12px;}
-  .h-st.hide-sm{display:none;}/* hide elevation + kcal on mobile */
+  /* ── Header: ultra-compact ── */
+  #hdr{padding:0 12px;height:var(--hdr);}
+  .h-title{font-size:15px;white-space:nowrap;}
+  .h-sub{display:none;}/* hidden on mobile — info in tabs + cards */
+  .h-st{padding:0 8px;min-width:44px;}
+  .h-v{font-size:11px;}
+  .h-l{font-size:6.5px;}
+  .h-st.hide-sm{display:none;}
+  .lang-toggle{margin-left:8px;margin-right:4px;padding:1px;}
+  .lang-btn{font-size:13px;padding:2px 4px;}
 
-  /* Middle: full width stack */
+  /* ── Sidebar: hidden on mobile — tabs are the nav ── */
   #mid{flex-direction:column;}
-  #sb{width:100%;height:auto;overflow:visible;border-right:none;border-bottom:1px solid var(--stone);}
+  #sb{display:none;}
 
-  /* Stage cards horizontal scroll on mobile */
-  .sb-s.stages{padding:10px 14px;}
-  .sc-row{
-    display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;
-    -webkit-overflow-scrolling:touch;padding-bottom:4px;
+  /* ── Map: hero of the screen ── */
+  #mw{
+    height:calc(100vh - var(--hdr) - var(--tabs));
+    min-height:400px;max-height:none;flex-shrink:0;
   }
-  .sc-row::-webkit-scrollbar{display:none;}
-  .sc{
-    min-width:190px;width:190px;flex-shrink:0;
-    scroll-snap-align:start;margin-bottom:0;
+
+  /* Info overlay: compact bottom-left */
+  #mi{
+    top:auto;bottom:56px;left:10px;right:auto;
+    padding:8px 12px;min-width:0;
+    max-width:65vw;
   }
-  .sc-sp{display:none;}/* hide sparkline on small cards */
-
-  /* Waypoints hidden on mobile (accessed via map taps) */
-  .sb-s.waypts,.sb-s.legend{display:none;}
-
-  /* Map: fixed height on mobile */
-  #mw{height:55vw;min-height:260px;max-height:380px;flex-shrink:0;}
-  #mi{top:8px;right:8px;padding:8px 10px;min-width:0;}
   .mi-l{display:none;}
-  .mi-n{font-size:12px;}
-  .mi-d{font-size:8px;margin-bottom:5px;}
+  .mi-n{font-size:13px;font-weight:500;}
+  .mi-d{font-size:8px;margin-bottom:4px;}
+  .mi-r{gap:10px;}
   .mi-sv{font-size:12px;}
+  .mi-sl{font-size:6.5px;}
 
-  #dbb{bottom:8px;padding:4px 6px;}
-  .db{padding:4px 10px;font-size:8px;min-height:30px;}
+  /* Day buttons: bigger tap targets */
+  #dbb{bottom:10px;padding:5px 8px;border-radius:24px;}
+  .db{padding:6px 14px;font-size:9px;min-height:36px;border-radius:18px;}
 
-  /* Bottom: full-width vertical stack on mobile */
+  /* ── Mobile tab bar: primary navigation ── */
+  #mobile-tabs{
+    display:flex;background:var(--cream);
+    border-bottom:1.5px solid var(--stone);
+    position:sticky;top:var(--hdr);z-index:100;
+    height:var(--tabs);
+  }
+  .mtab{
+    flex:1;padding:0;
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);background:transparent;border:none;
+    border-bottom:2.5px solid transparent;cursor:pointer;
+    text-align:center;transition:all .15s;
+    -webkit-tap-highlight-color:transparent;
+    display:flex;align-items:center;justify-content:center;
+    min-height:42px;
+  }
+  .mtab:active{opacity:.7;}
+  .mtab.act{color:var(--ink);font-weight:600;}
+  .mtab.d1.act{border-color:var(--d1);color:var(--d1);}
+  .mtab.d2.act{border-color:var(--d2);color:var(--d2);}
+  .mtab.d3.act{border-color:var(--d3);color:var(--d3);}
+
+  /* ── Bottom: day cards + collapsible calc ── */
   #bot{
     height:auto;grid-template-columns:1fr;
-    border-top:2px solid var(--stone);
-    overflow:visible;
+    border-top:none;overflow:visible;
   }
-  #calc{border-right:none;border-bottom:1px solid var(--stone);}
+
+  /* Calculator: collapsed by default */
+  #calc{
+    border-right:none;border-bottom:none;
+    max-height:0;overflow:hidden;transition:max-height .3s ease;
+    padding:0 14px;
+  }
+  #calc.open{max-height:400px;padding:14px;border-bottom:1px solid var(--stone);}
+  #calc-toggle{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    width:100%;padding:10px;
+    background:var(--paper);border:none;border-bottom:1px solid var(--stone);
+    font-family:'JetBrains Mono',monospace;font-size:9px;
+    letter-spacing:.1em;text-transform:uppercase;
+    color:var(--mid);cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #calc-toggle:active{background:var(--paper2);}
+  #calc-toggle .arrow{transition:transform .2s;font-size:8px;}
+  #calc-toggle.open .arrow{transform:rotate(180deg);}
+  .ct{display:none;}/* hidden — toggle button serves as title */
+  .cg{grid-template-columns:repeat(2,1fr);}
+
+  /* ── Day cards: full-width, one at a time ── */
   #dsm{
     overflow-x:auto;overflow-y:visible;
     display:flex;scroll-snap-type:x mandatory;
     -webkit-overflow-scrolling:touch;
     height:auto;
   }
+  #dsm::-webkit-scrollbar{display:none;}
   .dc{
-    width:88vw;min-width:280px;max-width:340px;
+    width:100vw;min-width:100vw;max-width:100vw;
     flex-shrink:0;height:auto;
-    border-right:1px solid var(--stone);
+    border-right:none;
+    scroll-snap-align:start;
   }
-  .dp{height:140px;}/* taller photo on mobile */
-  .db2{overflow-y:visible;height:auto;}/* let it grow */
+  .dp{height:180px;}/* large photo */
+  .db2{
+    overflow-y:visible;height:auto;
+    padding:12px 16px 20px;
+  }
 
-  /* Mobile tab bar for days at bottom */
-  #mobile-tabs{
-    display:flex;background:var(--cream);border-bottom:1px solid var(--stone);
-    position:sticky;top:var(--hdr);z-index:100;
-  }
-  .mtab{
-    flex:1;padding:10px 4px;
-    font-family:'JetBrains Mono',monospace;font-size:9px;
-    letter-spacing:.08em;text-transform:uppercase;
-    color:var(--muted);background:transparent;border:none;
-    border-bottom:2px solid transparent;cursor:pointer;
-    text-align:center;transition:all .15s;
+  /* Day card typography — mobile readable */
+  .dc-r{font-size:12px;}
+  .dc-dt{font-size:9px;}
+  .dc-tp{margin-bottom:8px;}
+  .dc-m{gap:12px;margin-bottom:8px;}
+  .dcmv{font-size:14px;}
+  .dcml{font-size:7.5px;}
+  .fl{font-size:8px;margin-bottom:3px;}
+  .fr{gap:3px;}
+  .fv{font-size:13px;}
+  .fu{font-size:8px;}
+  .fel{font-size:8px;}
+  .fe{font-size:11px;}
+  .ti{font-size:11px;line-height:1.5;margin-bottom:4px;}
+  .wi{font-size:11px;line-height:1.5;margin-bottom:4px;}
+  .wi-txt{padding:5px 8px;}
+  .tl{font-size:8px;margin-bottom:4px;}
+  .dv{margin:8px 0;}
+
+  /* Tips: collapsible */
+  .tips-wrap{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .tips-wrap.open{max-height:2000px;}
+  .tips-toggle{
+    display:flex;align-items:center;gap:4px;
+    background:none;border:1px solid var(--stone);border-radius:4px;
+    padding:6px 10px;margin:6px 0 4px;width:100%;
+    font-family:'JetBrains Mono',monospace;font-size:8px;
+    letter-spacing:.1em;text-transform:uppercase;
+    color:var(--mid);cursor:pointer;
     -webkit-tap-highlight-color:transparent;
   }
-  .mtab:active{opacity:.7;}
-  .mtab.act{color:var(--ink);font-weight:500;}
-  .mtab.d1.act{border-color:var(--d1);color:var(--d1);}
-  .mtab.d2.act{border-color:var(--d2);color:var(--d2);}
-  .mtab.d3.act{border-color:var(--d3);color:var(--d3);}
-  .mtab.d4.act{border-color:var(--d4);color:var(--d4);}
+  .tips-toggle:active{background:var(--paper);}
+  .tips-toggle .arrow{transition:transform .2s;font-size:7px;}
+  .tips-toggle.open .arrow{transform:rotate(180deg);}
 
-  /* Mobile calc compact */
-  .cg{grid-template-columns:repeat(2,1fr);}
-  .lang-toggle{margin-left:8px;}
-  .lang-btn{font-size:14px;padding:2px 4px;}
+  /* Bottom safe area for iPhone */
+  .dc:last-child .db2{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));}
 
   /* Live banner mobile */
-  #lt-banner{top:8px;left:8px;padding:6px 10px;gap:6px;}
+  #lt-banner{top:auto;bottom:56px;left:auto;right:10px;padding:6px 10px;gap:6px;}
   .lt-text{font-size:8px;}
-  .lt-link{font-size:10px;padding:3px 10px;}
+  .lt-link{font-size:10px;padding:4px 12px;}
+
+  /* Strava badges mobile */
+  .dc-strava{padding-top:8px;margin-top:8px;}
+  .dc-strava-link{font-size:12px;}
 }
 @media(min-width:768px){
   #mobile-tabs{display:none;}
+  #calc-toggle{display:none;}
+  .tips-toggle{display:none;}
+  .tips-wrap{max-height:none!important;}
 }
 
 /* ─── TABLET (768–1023px) ─────────────────────────────────── */
@@ -643,6 +712,7 @@ body{
 
 <!-- BOTTOM -->
 <div id="bot">
+  <button id="calc-toggle" onclick="toggleCalc()"><span id="calc-toggle-text"></span> <span class="arrow">▼</span></button>
   <div id="calc">
     <div class="ct" id="calc-title"></div>
     <div class="cr"><span class="cl" id="calc-spd-l"></span><input class="ci" id="spd" type="number" value="18" min="10" max="35" step=".5"/><span class="cu" id="calc-spd-u"></span></div>
@@ -824,8 +894,8 @@ const dsm=document.getElementById('dsm');dsm.innerHTML='';
       <div class="fel">${_t.eqTo}</div>
       <div class="fe"><span class="fi">🍌</span><span class="fn">${f.ban}</span>&nbsp;${_t.bananas} &nbsp;·&nbsp; <span class="fi">🍔</span><span class="fn">${f.bur}</span>&nbsp;${_t.burgers} &nbsp;·&nbsp; <span class="fi">🍕</span><span class="fn">${f.piz}</span>&nbsp;${_t.pizza}</div>
       <div class="dv"></div>
-      <div class="tl">${_t.stageTips}</div>
-      ${tips}
+      <button class="tips-toggle" onclick="toggleTips(this)"><span id="tips-label-${d}">${_t.stageTips}</span> <span class="arrow">▼</span></button>
+      <div class="tips-wrap">${tips}</div>
       <div class="tl" style="color:var(--warn);margin-top:5px">${_t.warnings}</div>
       ${warns}
     </div>`;
@@ -1114,9 +1184,31 @@ function setLang(lang){
   if(ltLink)ltLink.textContent=t.watchLive;
 
   // Re-render dynamic content
+  updateCalcToggle();
   renderDayCards();
   renderWaypoints();
   sel(cur);
+}
+
+
+// ─── MOBILE TOGGLES ─────────────────────────────────────
+function toggleCalc(){
+  const calc=document.getElementById('calc');
+  const btn=document.getElementById('calc-toggle');
+  calc.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+function toggleTips(btn){
+  const wrap=btn.nextElementSibling;
+  if(wrap&&wrap.classList.contains('tips-wrap')){
+    wrap.classList.toggle('open');
+    btn.classList.toggle('open');
+  }
+}
+// Set calc toggle text on lang change
+function updateCalcToggle(){
+  const el=document.getElementById('calc-toggle-text');
+  if(el)el.textContent=curLang==='pt'?'⏱ Calculadora':'⏱ Calculator';
 }
 
 // ─── INITIALIZE ─────────────────────────────────────────
