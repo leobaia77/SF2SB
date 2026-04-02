@@ -406,6 +406,8 @@ body{
 
   /* Mobile calc compact */
   .cg{grid-template-columns:repeat(2,1fr);}
+  .lang-toggle{margin-left:8px;}
+  .lang-btn{font-size:14px;padding:2px 4px;}
 
   /* Live banner mobile */
   #lt-banner{top:8px;left:8px;padding:6px 10px;gap:6px;}
@@ -502,6 +504,20 @@ body{
   margin-left:auto;transition:color .15s;
 }
 .dc-strava-link:hover{color:var(--ink);}
+
+/* ─── LANGUAGE TOGGLE ────────────────────────────────────── */
+.lang-toggle{
+  display:flex;align-items:center;gap:2px;margin-left:12px;margin-right:auto;
+  background:var(--paper);border:1px solid var(--stone);border-radius:16px;
+  padding:2px;
+}
+.lang-btn{
+  border:none;background:transparent;cursor:pointer;
+  font-size:16px;line-height:1;padding:3px 6px;border-radius:14px;
+  opacity:.45;transition:all .15s;
+}
+.lang-btn:hover{opacity:.7;}
+.lang-btn.active{opacity:1;background:var(--cream);box-shadow:0 1px 4px var(--shad);}
 </style>
 </head>
 <body>
@@ -510,23 +526,27 @@ body{
 <!-- HEADER -->
 <header id="hdr">
   <div>
-    <div class="h-title">San Francisco <em>→</em> Santa Barbara</div>
-    <div class="h-sub">Pacific Coast Highway · 3 stages · April 3–5, 2026</div>
+    <div class="h-title">San Francisco <em>&rarr;</em> Santa Barbara</div>
+    <div class="h-sub" id="h-sub"></div>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="lang-pt" onclick="setLang('pt')" title="Português">🇧🇷</button>
+    <button class="lang-btn" id="lang-en" onclick="setLang('en')" title="English">🇺🇸</button>
   </div>
   <div class="h-stats">
-    <div class="h-st"><div class="h-v">~560 km</div><div class="h-l">Distance</div></div>
-    <div class="h-st hide-sm"><div class="h-v">5,500 m</div><div class="h-l">Elevation</div></div>
-    <div class="h-st hide-sm"><div class="h-v">12,900 kcal</div><div class="h-l">Total fuel</div></div>
-    <div class="h-st"><div class="h-v" style="color:var(--d1)">Apr 3</div><div class="h-l">Start</div></div>
+    <div class="h-st"><div class="h-v" id="h-dist"></div><div class="h-l" id="h-dist-l"></div></div>
+    <div class="h-st hide-sm"><div class="h-v" id="h-elev"></div><div class="h-l" id="h-elev-l"></div></div>
+    <div class="h-st hide-sm"><div class="h-v">12.900 kcal</div><div class="h-l" id="h-fuel-l"></div></div>
+    <div class="h-st"><div class="h-v" style="color:var(--d1)" id="h-date"></div><div class="h-l" id="h-start-l"></div></div>
   </div>
 </header>
 
 <!-- MOBILE TABS -->
 <div id="mobile-tabs">
-  <button class="mtab all act" onclick="sel(0)">All</button>
-  <button class="mtab d1" onclick="sel(1)">Day 1</button>
-  <button class="mtab d2" onclick="sel(2)">Day 2</button>
-  <button class="mtab d3" onclick="sel(3)">Day 3</button>
+  <button class="mtab all act" onclick="sel(0)" id="mt-all"></button>
+  <button class="mtab d1" onclick="sel(1)" id="mt-1"></button>
+  <button class="mtab d2" onclick="sel(2)" id="mt-2"></button>
+  <button class="mtab d3" onclick="sel(3)" id="mt-3"></button>
 </div>
 
 <!-- MIDDLE -->
@@ -535,7 +555,7 @@ body{
   <!-- SIDEBAR -->
   <aside id="sb">
     <div class="sb-s stages">
-      <div class="sb-l">Stages</div>
+      <div class="sb-l" id="sb-stages-l"></div>
       <div class="sc-row" id="sc-row">
 
         <div class="sc d1 act" onclick="sel(1)" id="c1">
@@ -583,12 +603,12 @@ body{
       </div><!-- /sc-row -->
     </div><!-- /stages -->
 
-    <div class="sb-s waypts"><div class="sb-l">Key waypoints</div><div id="wpl"></div></div>
+    <div class="sb-s waypts"><div class="sb-l" id="sb-wp-l"></div><div id="wpl"></div></div>
     <div class="sb-s legend">
-      <div class="sb-l">Route</div>
-      <div class="lr"><div class="ll" style="background:var(--d1)"></div><span class="lt">Day 1 — SF → Monterey</span></div>
-      <div class="lr"><div class="ll" style="background:var(--d2)"></div><span class="lt">Day 2 — Big Sur → SLO (hardest)</span></div>
-      <div class="lr"><div class="ll" style="background:var(--d3)"></div><span class="lt">Day 3 — SLO → Santa Barbara</span></div>
+      <div class="sb-l" id="sb-route-l"></div>
+      <div class="lr"><div class="ll" style="background:var(--d1)"></div><span class="lt" id="leg-1"></span></div>
+      <div class="lr"><div class="ll" style="background:var(--d2)"></div><span class="lt" id="leg-2"></span></div>
+      <div class="lr"><div class="ll" style="background:var(--d3)"></div><span class="lt" id="leg-3"></span></div>
     </div>
   </aside>
 
@@ -598,21 +618,21 @@ body{
     <!-- Live tracker banner (hidden by default, shown via ?live= param) -->
     <div id="lt-banner" style="display:none">
       <span class="lt-dot"></span>
-      <span class="lt-text">Live now</span>
-      <a class="lt-link" id="lt-link" href="#" target="_blank" rel="noopener">Watch Live &rarr;</a>
+      <span class="lt-text" id="lt-text"></span>
+      <a class="lt-link" id="lt-link" href="#" target="_blank" rel="noopener" id="lt-link-text">Watch Live &rarr;</a>
     </div>
     <div class="mf" id="mi">
-      <div class="mi-l">Active stage</div>
+      <div class="mi-l" id="mi-l"></div>
       <div class="mi-n" id="mi-n">SF → Monterey</div>
       <div class="mi-d" id="mi-d">Day 1 · Apr 3</div>
       <div class="mi-r">
-        <div class="mi-s"><div class="mi-sv" id="mi-dist">175 km</div><div class="mi-sl">Dist</div></div>
-        <div class="mi-s"><div class="mi-sv" id="mi-elev">1,400 m</div><div class="mi-sl">Elev</div></div>
-        <div class="mi-s"><div class="mi-sv" id="mi-kcal">3,200 kcal</div><div class="mi-sl">Fuel</div></div>
+        <div class="mi-s"><div class="mi-sv" id="mi-dist">175 km</div><div class="mi-sl" id="mi-dist-l"></div></div>
+        <div class="mi-s"><div class="mi-sv" id="mi-elev">1,400 m</div><div class="mi-sl" id="mi-elev-l"></div></div>
+        <div class="mi-s"><div class="mi-sv" id="mi-kcal">3,200 kcal</div><div class="mi-sl" id="mi-fuel-l"></div></div>
       </div>
     </div>
     <div id="dbb">
-      <button class="db all" onclick="sel(0)">All</button>
+      <button class="db all" onclick="sel(0)" id="db-all"></button>
       <button class="db d1 act" onclick="sel(1)">D1</button>
       <button class="db d2" onclick="sel(2)">D2</button>
       <button class="db d3" onclick="sel(3)">D3</button>
@@ -624,9 +644,9 @@ body{
 <!-- BOTTOM -->
 <div id="bot">
   <div id="calc">
-    <div class="ct">⏱ Speed & time calculator</div>
-    <div class="cr"><span class="cl">Avg speed</span><input class="ci" id="spd" type="number" value="18" min="10" max="35" step=".5"/><span class="cu">km/h</span></div>
-    <div class="cr"><span class="cl">Stop time</span><input class="ci" id="stp" type="number" value="60" min="0" max="240" step="15"/><span class="cu">min/day</span></div>
+    <div class="ct" id="calc-title"></div>
+    <div class="cr"><span class="cl" id="calc-spd-l"></span><input class="ci" id="spd" type="number" value="18" min="10" max="35" step=".5"/><span class="cu" id="calc-spd-u"></span></div>
+    <div class="cr"><span class="cl" id="calc-stp-l"></span><input class="ci" id="stp" type="number" value="60" min="0" max="240" step="15"/><span class="cu" id="calc-stp-u"></span></div>
     <div class="cg" id="cres"></div>
   </div>
   <div id="dsm"></div>
@@ -734,19 +754,26 @@ WPS.forEach(wp=>{
 });
 
 // Waypoints sidebar list
-const wpl=document.getElementById('wpl');
-WPS.forEach(wp=>{
+function renderWaypoints(){
+const wpl=document.getElementById('wpl');wpl.innerHTML='';
+const L=curLang;
+WPS.forEach((wp,i)=>{
   const col=DC[wp.d],el=document.createElement('div');
   el.className='wpi';
-  el.innerHTML=`<div class="wpd" style="background:${col}"></div><span class="wpn">${wp.n}</span><span class="wpk">${wp.km}km</span><span class="wpb" style="background:${tBg[wp.t]||col}">${tTx[wp.t]||wp.t}</span>`;
+  const wpn=L==='pt'&&WPS_PT[i]?WPS_PT[i].n:wp.n;
+  const km_val=L==='pt'?wp.km+'km':Math.round(wp.km*0.621371)+'mi';
+  el.innerHTML=`<div class="wpd" style="background:${col}"></div><span class="wpn">${wpn}</span><span class="wpk">${km_val}</span><span class="wpb" style="background:${tBg[wp.t]||col}">${tTx[wp.t]||wp.t}</span>`;
   el.onclick=()=>{map.setView([wp.lat,wp.lng],13,{animate:true});mL[wp.d].eachLayer(l=>{if(l.getLatLng&&Math.abs(l.getLatLng().lat-wp.lat)<.0002)l.openPopup();});};
   wpl.appendChild(el);
 });
+}
 
 // ─── DAY SUMMARY CARDS ───────────────────────────────────
 const dsm=document.getElementById('dsm');
+function renderDayCards(){
+const dsm=document.getElementById('dsm');dsm.innerHTML='';
 [1,2,3].forEach(d=>{
-  const dd=DAYS[d],col=DC[d],f=fe(dd.kcal),p=PD[d];
+  const dd=DAYS[d],col=DC[d],f=fe(dd.kcal),p=PD[d],L=curLang;
   const el=document.createElement('div');
   el.className=`dc ds${d}`;el.id=`ds${d}`;
   // Touch: tap toggles photo
@@ -754,8 +781,15 @@ const dsm=document.getElementById('dsm');
   el.addEventListener('touchstart',()=>{el.classList.add('touched');},{passive:true});
   el.addEventListener('touchend',()=>{setTimeout(()=>el.classList.remove('touched'),600);},{passive:true});
 
-  const tips=dd.tips.map(t=>`<div class="ti"><div class="td"></div><span>${t}</span></div>`).join('');
-  const warns=dd.warns.map((w,i)=>`<div class="wi${i>0?' soft':''}"><div class="wi-bar"></div><div class="wi-txt">${w}</div></div>`).join('');
+  const _t=T();
+  const tips_data=L==='pt'&&DAYS_PT[d]?DAYS_PT[d].tips:dd.tips;
+  const warns_data=L==='pt'&&DAYS_PT[d]?DAYS_PT[d].warns:dd.warns;
+  const tips=tips_data.map(t=>`<div class="ti"><div class="td"></div><span>${t}</span></div>`).join('');
+  const warns=warns_data.map((w,i)=>`<div class="wi${i>0?' soft':''}"><div class="wi-bar"></div><div class="wi-txt">${w}</div></div>`).join('');
+  const _dist=L==='pt'?dd.dist+' km':Math.round(dd.dist*0.621371)+' mi';
+  const _elev=L==='pt'?dd.elev.toLocaleString('pt-BR')+' m':Math.round(dd.elev*3.28084).toLocaleString('en-US')+' ft';
+  const _full=L==='pt'&&DAYS_PT[d]?DAYS_PT[d].full:dd.full;
+  const _date=L==='pt'&&DAYS_PT[d]?DAYS_PT[d].date:dd.date;
 
   el.innerHTML=`
     <div class="dp">
@@ -772,31 +806,35 @@ const dsm=document.getElementById('dsm');
       <div class="dc-tp">
         <span class="dc-n">0${d}</span>
         <div>
-          <div class="dc-r">${dd.full}</div>
-          <div class="dc-dt">${dd.date}</div>
+          <div class="dc-r">${_full}</div>
+          <div class="dc-dt">${_date}</div>
         </div>
       </div>
       <div class="dc-m">
-        <div class="dcm"><div class="dcmv" style="color:${col}">${dd.dist} km</div><div class="dcml">Dist</div></div>
-        <div class="dcm"><div class="dcmv">${dd.elev} m</div><div class="dcml">Gain</div></div>
-        <div class="dcm"><div class="dcmv" id="dt${d}">${dd.dist===175?'7–8 h':dd.dist===235?'11–13 h':dd.dist===150?'7–8 h':'—'}</div><div class="dcml">Est. time</div></div>
+        <div class="dcm"><div class="dcmv" style="color:${col}">${_dist}</div><div class="dcml">${_t.dist}</div></div>
+        <div class="dcm"><div class="dcmv">${_elev}</div><div class="dcml">${_t.gain}</div></div>
+        <div class="dcm"><div class="dcmv" id="dt${d}"></div><div class="dcml">${_t.estTime}</div></div>
       </div>
-      <div class="fl">Fuel targets</div>
+      <div class="fl">${_t.fuelTargets}</div>
       <div class="fr">
         <span class="fv">${dd.kcal.toLocaleString()}</span><span class="fu">kcal</span>
-        <span class="fv">${dd.carbs}g</span><span class="fu">carbs</span>
-        <span class="fv">${dd.water}L</span><span class="fu">water</span>
+        <span class="fv">${dd.carbs}g</span><span class="fu">${_t.carbs}</span>
+        <span class="fv">${dd.water}L</span><span class="fu">${_t.water}</span>
       </div>
-      <div class="fel">Equivalent to</div>
-      <div class="fe"><span class="fi">🍌</span><span class="fn">${f.ban}</span>&nbsp;bananas &nbsp;·&nbsp; <span class="fi">🍔</span><span class="fn">${f.bur}</span>&nbsp;burgers &nbsp;·&nbsp; <span class="fi">🍕</span><span class="fn">${f.piz}</span>&nbsp;pizza slices</div>
+      <div class="fel">${_t.eqTo}</div>
+      <div class="fe"><span class="fi">🍌</span><span class="fn">${f.ban}</span>&nbsp;${_t.bananas} &nbsp;·&nbsp; <span class="fi">🍔</span><span class="fn">${f.bur}</span>&nbsp;${_t.burgers} &nbsp;·&nbsp; <span class="fi">🍕</span><span class="fn">${f.piz}</span>&nbsp;${_t.pizza}</div>
       <div class="dv"></div>
-      <div class="tl">Stage tips</div>
+      <div class="tl">${_t.stageTips}</div>
       ${tips}
-      <div class="tl" style="color:var(--warn);margin-top:5px">Warnings</div>
+      <div class="tl" style="color:var(--warn);margin-top:5px">${_t.warnings}</div>
       ${warns}
     </div>`;
   dsm.appendChild(el);
 });
+calcT();
+// Re-apply Strava badges
+if(typeof applyStrava==='function')applyStrava();
+}
 
 // ─── STATE ───────────────────────────────────────────────
 const BOUNDS={
@@ -838,7 +876,9 @@ function sel(d){
   // Fly map
   if(BOUNDS[d])map.fitBounds(BOUNDS[d],{padding:[36,36],animate:true,duration:.6});
   // Info overlay
-  const info=INFO[d]||INFO[0];
+  const L=curLang;
+  const info_src=L==='pt'?INFO_PT:INFO_EN;
+  const info=info_src[d]||info_src[0];
   document.getElementById('mi-n').textContent=info.n;
   document.getElementById('mi-d').textContent=info.d;
   document.getElementById('mi-dist').textContent=info.dist;
@@ -855,24 +895,234 @@ function sel(d){
 
 // ─── CALCULATOR ──────────────────────────────────────────
 function calcT(){
-  const spd=parseFloat(document.getElementById('spd').value)||18;
+  const L=curLang,_t=T();
+  const spd=parseFloat(document.getElementById('spd').value)||(L==='pt'?18:11);
   const sm=parseFloat(document.getElementById('stp').value)||60;
   const res=document.getElementById('cres');res.innerHTML='';
   [1,2,3].forEach(d=>{
-    const dd=DAYS[d],rh=dd.dist/spd,tot=rh+sm/60;
+    const dd=DAYS[d];
+    const dist_display=L==='pt'?dd.dist:Math.round(dd.dist*0.621371);
+    const dist_unit=L==='pt'?'km':'mi';
+    // Calculate time based on actual km regardless of display unit
+    const actual_spd=L==='pt'?spd:spd/0.621371;// convert mph to km/h for calc
+    const rh=dd.dist/actual_spd,tot=rh+sm/60;
     const h=Math.floor(tot),m=Math.round((tot-h)*60);
     const ts=`${h}h ${m.toString().padStart(2,'0')}m`;
     const el=document.getElementById(`dt${d}`);if(el)el.textContent=ts;
     const c=document.createElement('div');c.className=`cc d${d}c`;c.onclick=()=>sel(d);
-    c.innerHTML=`<div class="cc-d">Day ${d} · ${dd.dist}km</div><div class="cc-t">${ts}</div><div class="cc-s">${rh.toFixed(1)}h riding + ${sm}min stops</div>`;
+    const dayLabel=L==='pt'?'Dia':'Day';
+    c.innerHTML=`<div class="cc-d">${dayLabel} ${d} · ${dist_display}${dist_unit}</div><div class="cc-t">${ts}</div><div class="cc-s">${rh.toFixed(1)}h ${_t.riding} + ${sm}min ${_t.stops}</div>`;
     res.appendChild(c);
   });
 }
 document.getElementById('spd').addEventListener('input',calcT);
 document.getElementById('stp').addEventListener('input',calcT);
 
-calcT();
-// Show all routes on load, then highlight Day 1
+// curLang declared here, initialization after i18n block below
+var curLang=localStorage.getItem('sf2sb_lang')||'pt';
+
+// ─── I18N TRANSLATIONS ──────────────────────────────────
+const TRANSLATIONS={
+  pt:{
+    subtitle:'Pacific Coast Highway · 3 etapas · 3–5 de abril, 2026',
+    distance:'Distância',elevation:'Elevação',totalFuel:'Energia total',start:'Início',
+    date:'Abr 3',dist_h:'~560 km',elev_h:'5.500 m',
+    stages:'Etapas',keyWaypoints:'Pontos-chave',route:'Rota',
+    activeStage:'Etapa ativa',dist:'Dist',gain:'Ganho',elev:'Elev',fuel:'Energia',
+    all:'Todos',day:'Dia',d:'D',
+    calcTitle:'⏱ Calculadora de velocidade e tempo',
+    avgSpeed:'Vel. média',spdUnit:'km/h',stopTime:'Tempo parado',stpUnit:'min/dia',
+    fuelTargets:'Metas de energia',carbs:'carbs',water:'água',
+    eqTo:'Equivalente a',bananas:'bananas',burgers:'hambúrgueres',pizza:'fatias de pizza',
+    stageTips:'Dicas da etapa',warnings:'Avisos',
+    estTime:'Tempo est.',riding:'pedalando',stops:'paradas',
+    liveNow:'Ao vivo',watchLive:'Assistir ao vivo →',
+    complete:'✓ Concluído',viewStrava:'Ver no Strava →',viewStravaLong:'Ver pedalada no Strava →',
+    leg1:'Dia 1 — SF → Monterey',
+    leg2:'Dia 2 — Big Sur → SLO (mais difícil)',
+    leg3:'Dia 3 — SLO → Santa Barbara',
+    sc1r:'SF → Monterey',sc1date:'Abr 3',sc1diff:'Moderado',
+    sc2r:'Monterey → San Luis Obispo',sc2date:'Abr 4',sc2diff:'Muito difícil',
+    sc3r:'SLO → Santa Barbara',sc3date:'Abr 5',sc3diff:'Moderado',
+    sc1dist:'175 km',sc1elev:'1.400 m',
+    sc2dist:'235 km',sc2elev:'2.700 m',
+    sc3dist:'150 km',sc3elev:'1.400 m',
+  },
+  en:{
+    subtitle:'Pacific Coast Highway · 3 stages · April 3–5, 2026',
+    distance:'Distance',elevation:'Elevation',totalFuel:'Total fuel',start:'Start',
+    date:'Apr 3',dist_h:'~348 mi',elev_h:'18,045 ft',
+    stages:'Stages',keyWaypoints:'Key waypoints',route:'Route',
+    activeStage:'Active stage',dist:'Dist',gain:'Gain',elev:'Elev',fuel:'Fuel',
+    all:'All',day:'Day',d:'D',
+    calcTitle:'⏱ Speed & time calculator',
+    avgSpeed:'Avg speed',spdUnit:'mph',stopTime:'Stop time',stpUnit:'min/day',
+    fuelTargets:'Fuel targets',carbs:'carbs',water:'water',
+    eqTo:'Equivalent to',bananas:'bananas',burgers:'burgers',pizza:'pizza slices',
+    stageTips:'Stage tips',warnings:'Warnings',
+    estTime:'Est. time',riding:'riding',stops:'stops',
+    liveNow:'Live now',watchLive:'Watch Live →',
+    complete:'✓ Complete',viewStrava:'Strava →',viewStravaLong:'View ride on Strava →',
+    leg1:'Day 1 — SF → Monterey',
+    leg2:'Day 2 — Big Sur → SLO (hardest)',
+    leg3:'Day 3 — SLO → Santa Barbara',
+    sc1r:'SF → Monterey',sc1date:'Apr 3',sc1diff:'Moderate',
+    sc2r:'Monterey → San Luis Obispo',sc2date:'Apr 4',sc2diff:'Very Hard',
+    sc3r:'SLO → Santa Barbara',sc3date:'Apr 5',sc3diff:'Moderate',
+    sc1dist:'109 mi',sc1elev:'4,593 ft',
+    sc2dist:'146 mi',sc2elev:'8,858 ft',
+    sc3dist:'93 mi',sc3elev:'4,593 ft',
+  }
+};
+function T(){return TRANSLATIONS[curLang];}
+
+const INFO_PT={
+  0:{n:'Rota completa',d:'3–5 de abril, 2026',dist:'~560 km',elev:'~5.500 m',kcal:'~12.900 kcal'},
+  1:{n:'SF → Monterey',d:'Dia 1 · 3 de abril',dist:'175 km',elev:'1.400 m',kcal:'3.200 kcal'},
+  2:{n:'Monterey → SLO',d:'Dia 2 · 4 de abril',dist:'235 km',elev:'2.700 m',kcal:'5.800 kcal'},
+  3:{n:'SLO → Santa Barbara',d:'Dia 3 · 5 de abril',dist:'150 km',elev:'1.400 m',kcal:'3.900 kcal'}
+};
+const INFO_EN={
+  0:{n:'Full Route',d:'April 3–5, 2026',dist:'~348 mi',elev:'~18,045 ft',kcal:'~12,900 kcal'},
+  1:{n:'SF → Monterey',d:'Day 1 · April 3',dist:'109 mi',elev:'4,593 ft',kcal:'3,200 kcal'},
+  2:{n:'Monterey → SLO',d:'Day 2 · April 4',dist:'146 mi',elev:'8,858 ft',kcal:'5,800 kcal'},
+  3:{n:'SLO → Santa Barbara',d:'Day 3 · April 5',dist:'93 mi',elev:'4,593 ft',kcal:'3,900 kcal'}
+};
+
+const DAYS_PT={
+  1:{full:'San Francisco → Monterey',date:'Dia 1 · 3 de abril',
+     tips:['Comece no Ferry Building. Café da manhã: mínimo 100g de carboidratos.',
+           'Half Moon Bay (km 55) — melhor parada da manhã, cafés disponíveis.',
+           'Pigeon Point Lighthouse (km 85) — marco cênico, lanche rápido.',
+           'Santa Cruz (km 125) — almoço completo. Área do Boardwalk, muitas opções.',
+           'Moss Landing (km 155) — lontras marinhas, trecho costeiro plano.',
+           'Serviços disponíveis em todo o percurso — sem estresse de abastecimento.'],
+     warns:['Defina alarme de 20 min para comer antes de começar a pedalar. Coma desde o km 0.',
+            'Ventos contrários comuns em Pacifica — pedale por sensação, não por números.',
+            'Trânsito pesado nos primeiros 15 km por Daly City. Atenção redobrada.',
+            'À noite: compre toda a comida do Dia 2 em Monterey antes de dormir.']},
+  2:{full:'Monterey → San Luis Obispo',date:'Dia 2 · 4 de abril',
+     tips:['Carmel (km 25) — ÚLTIMOS serviços fáceis. Compre 6 géis, 2 barras, 2 bolos de arroz.',
+           'Bixby Creek Bridge (km 48) — parada icônica para foto. Coma um gel antes da subida.',
+           'Big Sur Village (km 68) — ÚLTIMO reabastecimento antes do vazio de 80 km.',
+           'San Simeon (km 155) — você sobreviveu a Big Sur. Refeição completa + reabastecimento.',
+           'Morro Bay (km 203) — Morro Rock. Segundo almoço ou lanche reforçado.',
+           'Trate cada subida de Big Sur separadamente. Uma de cada vez. Use a marcha 36×34.'],
+     warns:['⚠ 80 km SEM NENHUM SERVIÇO de Lucia → San Simeon. Inegociável.',
+            '⚠ Sem sinal de celular por ~50 km. Baixe mapas offline em Carmel.',
+            '⚠ Estrada estreita, penhascos. Mantenha-se à direita, use luz traseira.',
+            '⚠ Dia mais longo — 235 km. Maior elevação — 2.700 m. Comece muito conservadoramente.',
+            'Refeição de recuperação em até 60 min após terminar é crítica para o Dia 3.']},
+  3:{full:'San Luis Obispo → Santa Barbara',date:'Dia 3 · 5 de abril',
+     tips:['Pismo Beach (km 18) — clam chowder. Merecido depois de ontem.',
+           'Lompoc (km 58) — bom ponto para almoço. Reabasteça.',
+           'Solvang (km 72) — pastéis dinamarqueses. Pare. Coma um.',
+           'Opção A: Hwy 154 pelo San Marcos Pass — cênico, subida de 10%.',
+           'Opção B: Hwy 101 costeira — mais plana, mais rápida, litoral bonito.',
+           'Termine no Stearns Wharf. Vá até o final. Tire uma foto.'],
+     warns:['Pernas com fadiga total de Big Sur. FC +8–12 bpm para mesma potência — normal.',
+            'Santa Barbara esquenta — hidrate-se desde o início.',
+            '3 dias nas pernas. Pedale por sensação — esta é sua volta da vitória.',
+            'Comemore imediatamente. Cerveja gelada. Você mereceu.']}
+};
+
+// Portuguese waypoint names (same indices as WPS)
+const WPS_PT=[
+  {n:'San Francisco'},{n:'Half Moon Bay'},{n:'Santa Cruz'},{n:'Monterey'},
+  {n:'Carmel'},{n:'Bixby Bridge'},{n:'Big Sur Village'},
+  {n:'⚠ Lucia'},{n:'San Simeon'},{n:'Morro Bay'},
+  {n:'San Luis Obispo'},{n:'Pismo Beach'},{n:'Lompoc'},
+  {n:'Solvang'},{n:'🏁 Santa Barbara'}
+];
+
+function setLang(lang){
+  curLang=lang;
+  localStorage.setItem('sf2sb_lang',lang);
+  const t=TRANSLATIONS[lang];
+
+  // Flag buttons
+  document.getElementById('lang-pt').classList.toggle('active',lang==='pt');
+  document.getElementById('lang-en').classList.toggle('active',lang==='en');
+
+  // Header
+  document.getElementById('h-sub').textContent=t.subtitle;
+  document.getElementById('h-dist').textContent=t.dist_h;
+  document.getElementById('h-dist-l').textContent=t.distance;
+  document.getElementById('h-elev').textContent=t.elev_h;
+  document.getElementById('h-elev-l').textContent=t.elevation;
+  document.getElementById('h-fuel-l').textContent=t.totalFuel;
+  document.getElementById('h-date').textContent=t.date;
+  document.getElementById('h-start-l').textContent=t.start;
+
+  // Mobile tabs
+  document.getElementById('mt-all').textContent=t.all;
+  for(let i=1;i<=3;i++)document.getElementById('mt-'+i).textContent=t.day+' '+i;
+
+  // Day buttons
+  document.getElementById('db-all').textContent=t.all;
+
+  // Sidebar labels
+  document.getElementById('sb-stages-l').textContent=t.stages;
+  document.getElementById('sb-wp-l').textContent=t.keyWaypoints;
+  document.getElementById('sb-route-l').textContent=t.route;
+
+  // Sidebar cards
+  for(let i=1;i<=3;i++){
+    const card=document.getElementById('c'+i);
+    const r=card.querySelector('.sc-r');
+    const dt=card.querySelector('.sc-d');
+    const mvs=card.querySelectorAll('.sc-mv');
+    const mls=card.querySelectorAll('.sc-ml');
+    const dl=card.querySelector('.sc-dl');
+    r.textContent=t['sc'+i+'r'];
+    dt.textContent=t['sc'+i+'date'];
+    mvs[0].textContent=t['sc'+i+'dist'];
+    mls[0].textContent=t.dist;
+    mvs[1].textContent=t['sc'+i+'elev'];
+    mls[1].textContent=t.gain;
+    mls[2].textContent='kcal';
+    dl.textContent=t['sc'+i+'diff'];
+  }
+
+  // Legend
+  document.getElementById('leg-1').textContent=t.leg1;
+  document.getElementById('leg-2').textContent=t.leg2;
+  document.getElementById('leg-3').textContent=t.leg3;
+
+  // Map info overlay labels
+  document.getElementById('mi-l').textContent=t.activeStage;
+  document.getElementById('mi-dist-l').textContent=t.dist;
+  document.getElementById('mi-elev-l').textContent=t.elev;
+  document.getElementById('mi-fuel-l').textContent=t.fuel;
+
+  // Calculator
+  document.getElementById('calc-title').textContent=t.calcTitle;
+  document.getElementById('calc-spd-l').textContent=t.avgSpeed;
+  document.getElementById('calc-spd-u').textContent=t.spdUnit;
+  document.getElementById('calc-stp-l').textContent=t.stopTime;
+  document.getElementById('calc-stp-u').textContent=t.stpUnit;
+
+  // Update speed default based on lang
+  const spdInput=document.getElementById('spd');
+  if(lang==='en'&&spdInput.value==='18')spdInput.value='11';
+  if(lang==='pt'&&spdInput.value==='11')spdInput.value='18';
+
+  // Live tracker
+  const ltText=document.getElementById('lt-text');
+  if(ltText)ltText.textContent=t.liveNow;
+  const ltLink=document.getElementById('lt-link');
+  if(ltLink)ltLink.textContent=t.watchLive;
+
+  // Re-render dynamic content
+  renderDayCards();
+  renderWaypoints();
+  sel(cur);
+}
+
+// ─── INITIALIZE ─────────────────────────────────────────
+renderDayCards();
+renderWaypoints();
+setLang(curLang);
 setTimeout(()=>{sel(0);setTimeout(()=>sel(1),650);},300);
 
 // ─── LIVE TRACKER + STRAVA ──────────────────────────────
@@ -891,31 +1141,40 @@ setTimeout(()=>{sel(0);setTimeout(()=>sel(1),650);},300);
   // Strava completed stages
   const stravaSvg='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
 
-  for(let d=1;d<=3;d++){
-    const url=params.get('s'+d);
-    if(!url)continue;
+  window.applyStrava=function(){
+    const t=T();
+    for(let d=1;d<=3;d++){
+      const url=params.get('s'+d);
+      if(!url)continue;
 
-    // Sidebar stage card badge
-    const card=document.getElementById('c'+d);
-    if(card){
-      const done=document.createElement('div');
-      done.className='sc-done';
-      done.innerHTML=`<span class="sc-done-badge">\u2713 Complete</span><a class="sc-done-link" href="${url}" target="_blank" rel="noopener">${stravaSvg} Strava</a>`;
-      card.appendChild(done);
-    }
+      // Sidebar stage card badge (only add if not already present)
+      const card=document.getElementById('c'+d);
+      if(card&&!card.querySelector('.sc-done')){
+        const done=document.createElement('div');
+        done.className='sc-done';
+        done.innerHTML=`<span class="sc-done-badge">${t.complete}</span><a class="sc-done-link" href="${url}" target="_blank" rel="noopener">${stravaSvg} ${t.viewStrava}</a>`;
+        card.appendChild(done);
+      }else if(card){
+        const badge=card.querySelector('.sc-done-badge');
+        const link=card.querySelector('.sc-done-link');
+        if(badge)badge.textContent=t.complete;
+        if(link)link.innerHTML=stravaSvg+' '+t.viewStrava;
+      }
 
-    // Bottom day card badge
-    const dc=document.getElementById('ds'+d);
-    if(dc){
-      const db2=dc.querySelector('.db2');
-      if(db2){
-        const row=document.createElement('div');
-        row.className='dc-strava';
-        row.innerHTML=`<span class="dc-strava-badge">\u2713 Complete</span><a class="dc-strava-link" href="${url}" target="_blank" rel="noopener">${stravaSvg} View ride on Strava &rarr;</a>`;
-        db2.appendChild(row);
+      // Bottom day card badge (only add if not already present)
+      const dc=document.getElementById('ds'+d);
+      if(dc){
+        const db2=dc.querySelector('.db2');
+        if(db2&&!db2.querySelector('.dc-strava')){
+          const row=document.createElement('div');
+          row.className='dc-strava';
+          row.innerHTML=`<span class="dc-strava-badge">${t.complete}</span><a class="dc-strava-link" href="${url}" target="_blank" rel="noopener">${stravaSvg} ${t.viewStravaLong}</a>`;
+          db2.appendChild(row);
+        }
       }
     }
-  }
+  };
+  applyStrava();
 })();
 </script>
 </body>
