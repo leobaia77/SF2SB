@@ -587,6 +587,49 @@ body{
 }
 .lang-btn:hover{opacity:.7;}
 .lang-btn.active{opacity:1;background:var(--cream);box-shadow:0 1px 4px var(--shad);}
+
+/* ─── REPORT LINKS ──────────────────────────────────────── */
+#report-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--ink);color:#f9f6f0;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 14px;border-radius:6px;text-decoration:none;
+  white-space:nowrap;flex-shrink:0;margin-left:14px;
+  box-shadow:0 2px 8px rgba(43,38,32,.22);
+  transition:background .15s,box-shadow .15s,transform .1s;
+}
+#report-btn:hover{background:#3d2f25;box-shadow:0 4px 14px rgba(43,38,32,.32);transform:translateY(-1px);}
+@media(max-width:767px){
+  #report-btn{font-size:9px;padding:5px 10px;margin-left:8px;}
+}
+
+/* Sidebar post-ride chips */
+.sb-s.report-links{padding:12px 14px;}
+.rl-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.rl-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--cream);border:1px solid var(--stone);border-radius:5px;
+  padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:9px;
+  color:var(--mid);text-decoration:none;white-space:nowrap;
+  transition:background .12s,border-color .12s,color .12s;
+}
+.rl-chip:hover{background:var(--ink);border-color:var(--ink);color:#f9f6f0;}
+
+/* Stage card micro-link */
+.sc-report{
+  display:block;text-align:right;margin-top:4px;
+  font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.06em;
+  color:var(--muted);text-decoration:none;
+}
+.sc-report:hover{color:var(--ink);text-decoration:underline;}
+
+/* Day card report link */
+.dc-report-link{
+  display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;
+  color:var(--muted);text-decoration:none;
+}
+.dc-report-link:hover{color:var(--ink);text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -602,6 +645,7 @@ body{
     <button class="lang-btn active" id="lang-pt" onclick="setLang('pt')" title="Português">🇧🇷</button>
     <button class="lang-btn" id="lang-en" onclick="setLang('en')" title="English">🇺🇸</button>
   </div>
+  <a id="report-btn" href="report.html" target="_blank" rel="noopener">📊 Post-Ride Report</a>
   <div class="h-stats">
     <div class="h-st"><div class="h-v" id="h-dist"></div><div class="h-l" id="h-dist-l"></div></div>
     <div class="h-st hide-sm"><div class="h-v" id="h-elev"></div><div class="h-l" id="h-elev-l"></div></div>
@@ -639,6 +683,7 @@ body{
             <polygon points="0,16 35,13 70,9 105,6 135,8 160,12 190,8 220,4 252,8 258,12 258,20 0,20" fill="var(--d1)" opacity=".14"/>
             <polyline points="0,16 35,13 70,9 105,6 135,8 160,12 190,8 220,4 252,8 258,12" fill="none" stroke="var(--d1)" stroke-width="1.4"/>
           </svg>
+          <a class="sc-report" href="report.html?tab=profiles" target="_blank" rel="noopener" onclick="event.stopPropagation()">view data →</a>
         </div>
 
         <div class="sc d2" onclick="sel(2)" id="c2">
@@ -653,6 +698,7 @@ body{
             <polygon points="0,17 28,13 55,6 82,2 110,4 140,2 165,4 195,8 225,13 252,17 258,18 258,20 0,20" fill="var(--d2)" opacity=".14"/>
             <polyline points="0,17 28,13 55,6 82,2 110,4 140,2 165,4 195,8 225,13 252,17 258,18" fill="none" stroke="var(--d2)" stroke-width="1.4"/>
           </svg>
+          <a class="sc-report" href="report.html?tab=profiles" target="_blank" rel="noopener" onclick="event.stopPropagation()">view data →</a>
         </div>
 
         <div class="sc d3" onclick="sel(3)" id="c3">
@@ -667,6 +713,7 @@ body{
             <polygon points="0,15 45,10 85,13 115,7 148,11 178,15 210,9 245,12 258,16 258,20 0,20" fill="var(--d3)" opacity=".14"/>
             <polyline points="0,15 45,10 85,13 115,7 148,11 178,15 210,9 245,12 258,16" fill="none" stroke="var(--d3)" stroke-width="1.4"/>
           </svg>
+          <a class="sc-report" href="report.html?tab=profiles" target="_blank" rel="noopener" onclick="event.stopPropagation()">view data →</a>
         </div>
 
       </div><!-- /sc-row -->
@@ -678,6 +725,17 @@ body{
       <div class="lr"><div class="ll" style="background:var(--d1)"></div><span class="lt" id="leg-1"></span></div>
       <div class="lr"><div class="ll" style="background:var(--d2)"></div><span class="lt" id="leg-2"></span></div>
       <div class="lr"><div class="ll" style="background:var(--d3)"></div><span class="lt" id="leg-3"></span></div>
+    </div>
+
+    <div class="sb-s report-links">
+      <div class="sb-l">Post-Ride Analysis</div>
+      <div class="rl-chips">
+        <a class="rl-chip" href="report.html?tab=profiles" target="_blank" rel="noopener">📈 Day Profiles</a>
+        <a class="rl-chip" href="report.html?tab=power" target="_blank" rel="noopener">⚡ Power</a>
+        <a class="rl-chip" href="report.html?tab=glucose" target="_blank" rel="noopener">🩸 Glucose</a>
+        <a class="rl-chip" href="report.html?tab=recovery" target="_blank" rel="noopener">😴 Recovery</a>
+        <a class="rl-chip" href="report.html?tab=load" target="_blank" rel="noopener">🍌 Load & Nutrition</a>
+      </div>
     </div>
   </aside>
 
@@ -898,6 +956,7 @@ const dsm=document.getElementById('dsm');dsm.innerHTML='';
       <div class="tips-wrap">${tips}</div>
       <div class="tl" style="color:var(--warn);margin-top:5px">${_t.warnings}</div>
       ${warns}
+      <a class="dc-report-link" href="report.html?tab=profiles" target="_blank" rel="noopener" onclick="event.stopPropagation()">📊 Day ${d} Analysis →</a>
     </div>`;
   dsm.appendChild(el);
 });

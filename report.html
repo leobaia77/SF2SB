@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SF to SB — Full Coach Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;color:#1e293b;font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.6}
+.page{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+
+h1{font-size:26px;font-weight:800;color:#0f172a;letter-spacing:-.02em}
+.hdr-sub{color:#64748b;font-size:12px;margin-top:4px;margin-bottom:16px}
+
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:18px}
+.pill{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:3px 9px;font-size:11px;color:#475569}
+.pill.r{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+.pill.a{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.pill.g{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+.pill.b{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+
+.day-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.dc{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px}
+.dc.d1{border-top:3px solid #0891b2}.dc.d2{border-top:3px solid #ea580c}.dc.d3{border-top:3px solid #7c3aed}
+.dc-name{font-size:12px;font-weight:700;color:#0f172a;margin-bottom:7px}
+.dc-g{display:grid;grid-template-columns:1fr 1fr;gap:1px 8px}
+.dc-r{font-size:10.5px;color:#64748b}.dc-r b{color:#1e293b}
+
+.tabs{display:flex;gap:2px;border-bottom:3px solid #e2e8f0;margin-bottom:24px;flex-wrap:wrap}
+.tab{
+  font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  padding:11px 18px;border:none;border-bottom:4px solid transparent;
+  margin-bottom:-3px;background:none;cursor:pointer;
+  color:#94a3b8;transition:color .15s,border-color .15s,background .15s;
+  border-radius:4px 4px 0 0;
+}
+.tab:hover:not(.on){color:#475569;background:#f8fafc}
+/* per-tab active colors */
+.tab[onclick*="profiles"].on{color:#0891b2;border-bottom-color:#0891b2;background:#f0f9ff}
+.tab[onclick*="power"].on   {color:#ea580c;border-bottom-color:#ea580c;background:#fff7ed}
+.tab[onclick*="glucose"].on {color:#dc2626;border-bottom-color:#dc2626;background:#fef2f2}
+.tab[onclick*="recovery"].on{color:#7c3aed;border-bottom-color:#7c3aed;background:#f5f3ff}
+.tab[onclick*="load"].on    {color:#16a34a;border-bottom-color:#16a34a;background:#f0fdf4}
+.pnl{display:none}.pnl.on{display:block}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-h{padding:11px 16px;background:#f8fafc;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.card-t{font-size:13px;font-weight:700;color:#0f172a}
+.card-s{font-size:11px;color:#94a3b8}
+.card-b{padding:14px 16px}
+canvas{display:block;width:100%!important}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
+.note{border-left:3px solid;border-radius:0 5px 5px 0;padding:9px 13px;margin-bottom:12px;font-size:12px;line-height:1.75}
+.note.r{border-color:#ef4444;background:#fef2f2;color:#7f1d1d}
+.note.g{border-color:#16a34a;background:#f0fdf4;color:#14532d}
+.note.a{border-color:#f59e0b;background:#fffbeb;color:#78350f}
+.note.b{border-color:#3b82f6;background:#eff6ff;color:#1e3a5f}
+.note b{color:#0f172a}
+
+.ig{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:14px}
+.ic{border:1px solid #e2e8f0;border-radius:7px;padding:13px;background:#fff}
+.ic.r{border-color:#fca5a5;background:#fff5f5}
+.ic.g{border-color:#86efac;background:#f0fdf4}
+.ic.a{border-color:#fde68a;background:#fffbeb}
+.ic.b{border-color:#93c5fd;background:#eff6ff}
+.ic-l{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;margin-bottom:5px}
+.ic-t{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px;line-height:1.2}
+.ic-b{font-size:11px;color:#475569;line-height:1.72}
+.ic-ref{font-size:9px;color:#94a3b8;margin-top:6px;font-style:italic;border-top:1px solid #e2e8f0;padding-top:5px}
+.ic-n{font-size:26px;font-weight:800;margin-top:7px}
+.ic-n.r{color:#dc2626}.ic-n.g{color:#16a34a}.ic-n.a{color:#b45309}.ic-n.b{color:#2563eb}
+
+.cob{border:1px solid;border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.cob.g{border-color:#86efac;background:#f0fdf4}
+.cob.r{border-color:#fca5a5;background:#fff5f5}
+.cob.a{border-color:#fde68a;background:#fffbeb}
+.cob-h{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.cob.g .cob-h{color:#166534}.cob.r .cob-h{color:#b91c1c}.cob.a .cob-h{color:#92400e}
+.cob ul{padding-left:18px}
+.cob li{font-size:11.5px;color:#374151;line-height:1.85;margin-bottom:2px}
+.cob li b{color:#0f172a}
+
+.ev-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:10px;color:#64748b}
+.ev-item{display:flex;align-items:center;gap:5px}
+.ev-dot{width:3px;height:14px;border-radius:2px;flex-shrink:0}
+
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;padding:7px 10px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;background:#f8fafc}
+td{padding:6px 10px;border-bottom:1px solid #f8fafc;white-space:nowrap}
+tr:hover td{background:#f8fafc}
+tr.hl-r td{background:#fff5f5}
+.lb{font-weight:700;color:#0f172a}
+.c1{color:#0891b2}.c2{color:#ea580c}.c3{color:#7c3aed}
+.red{color:#dc2626}.grn{color:#16a34a}.amb{color:#b45309}
+.bx{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600}
+.b-r{background:#fee2e2;color:#dc2626}.b-g{background:#dcfce7;color:#16a34a}.b-a{background:#fef9c3;color:#92400e}
+
+@media(max-width:640px){.day-row,.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div style="background:#0f172a;padding:8px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100">
+  <a href="index.html" style="color:#94a3b8;text-decoration:none;font-family:system-ui,sans-serif;font-size:11px;letter-spacing:.05em;display:flex;align-items:center;gap:5px">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Route Plan
+  </a>
+  <span style="color:#334155;font-size:11px;font-family:system-ui,sans-serif">·</span>
+  <span style="color:#475569;font-size:11px;font-family:system-ui,sans-serif">SF → Santa Barbara · Coach Report</span>
+</div>
+<div class="page">
+
+<h1>SF → Santa Barbara — Full Coach Report</h1>
+<div class="hdr-sub">Strava Power Streams · Dexcom CGM · Oura Ring · Garmin Edge 850 · Apr 3–5 2026</div>
+<div class="pills">
+  <div class="pill">603 km · 6,269 m</div>
+  <div class="pill r">1,260 TSS — 3 days</div>
+  <div class="pill r">HRV 13 ms post-D3 (−78%)</div>
+  <div class="pill a">D3 peak 38°C sensor · 328 m high point</div>
+  <div class="pill b">FTP est. 205 W (VO2max 43)</div>
+  <div class="pill g">D2 best managed — 7.3h sleep pre-ride</div>
+</div>
+
+<div class="day-row">
+  <div class="dc d1">
+    <div class="dc-name">Day 1 · Apr 3 · San Francisco</div>
+    <div class="dc-g">
+      <div class="dc-r">Dist <b>199 km</b></div><div class="dc-r">Climb <b>1,963 m</b></div>
+      <div class="dc-r">Avg W <b>145 W · NP 154</b></div><div class="dc-r">TSS <b>~438</b></div>
+      <div class="dc-r">Avg HR <b>144 bpm</b></div><div class="dc-r">Pw:HR <b>1.007</b></div>
+      <div class="dc-r">Sleep pre <b>5.6 h</b></div><div class="dc-r">HRV pre <b>34.8 ms</b></div>
+    </div>
+  </div>
+  <div class="dc d2">
+    <div class="dc-name">Day 2 · Apr 4 · Big Sur (291 m peak)</div>
+    <div class="dc-g">
+      <div class="dc-r">Dist <b>228 km</b></div><div class="dc-r">Climb <b>2,798 m</b></div>
+      <div class="dc-r">Avg W <b>134 W · NP 131</b></div><div class="dc-r">TSS <b>~465</b></div>
+      <div class="dc-r">Avg HR <b>135 bpm</b></div><div class="dc-r">Pw:HR <b>0.993</b></div>
+      <div class="dc-r">Sleep pre <b>7.3 h</b></div><div class="dc-r">HRV pre <b>29.6 ms</b></div>
+    </div>
+  </div>
+  <div class="dc d3">
+    <div class="dc-name">Day 3 · Apr 5 · SLO (328 m peak) ⚡</div>
+    <div class="dc-g">
+      <div class="dc-r">Dist <b>175 km</b></div><div class="dc-r">Climb <b>1,508 m</b></div>
+      <div class="dc-r">Avg W <b>123 W · NP 130</b></div><div class="dc-r">TSS <b>~357</b></div>
+      <div class="dc-r">Avg HR <b>137 bpm</b></div><div class="dc-r">Pw:HR <b>0.898</b></div>
+      <div class="dc-r">Sleep pre <b>6.5 h</b></div><div class="dc-r">HRV pre <b>30.6 ms</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="sw('profiles')">📈 Day Profiles</button>
+  <button class="tab" onclick="sw('power')">⚡ Power Analysis</button>
+  <button class="tab" onclick="sw('glucose')">🩸 Glucose</button>
+  <button class="tab" onclick="sw('recovery')">😴 Recovery</button>
+  <button class="tab" onclick="sw('load')">🍌 Load & Nutrition</button>
+</div>
+
+<!-- ===== DAY PROFILES ===== -->
+<div id="p-profiles" class="pnl on">
+  <div class="note b"><b>How to read these charts:</b> Blue solid = Power (W, left axis). Red dashed = Heart Rate (bpm, left axis). Tan filled area = Altitude (m, right axis). Vertical dashed lines mark annotated events. Power and HR share the left axis (0–420 range) — HR values naturally sit in the 100–175 band, power in the 0–400 band; both are readable simultaneously.</div>
+
+  <div class="ev-legend">
+    <div class="ev-item"><div class="ev-dot" style="background:#f97316"></div>Stop / Lunch</div>
+    <div class="ev-item"><div class="ev-dot" style="background:#dc2626"></div>Nausea / GI event</div>
+    <div class="ev-item"><div class="ev-dot" style="background:#7c3aed"></div>Flat tire</div>
+    <div class="ev-item"><div class="ev-dot" style="background:#16a34a"></div>Resume / Recovery</div>
+    <div class="ev-item"><div class="ev-dot" style="background:#b45309"></div>Altitude peak</div>
+  </div>
+
+  <div class="card" style="margin-top:10px">
+    <div class="card-h"><div class="card-t">Day 1 · San Francisco · Apr 3</div><div class="card-s">199 km · 1,963 m · 8h 13m · NP 154 W · HRV pre 34.8 ms</div></div>
+    <div class="card-b"><canvas id="chartD1" height="170"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Day 2 · Big Sur · Apr 4 — Best Managed Stage</div><div class="card-s">228 km · 2,798 m · 10h 2m · NP 131 W · HRV pre 29.6 ms</div></div>
+    <div class="card-b"><canvas id="chartD2" height="170"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h" style="background:#fff5f5"><div class="card-t" style="color:#7f1d1d">Day 3 · SLO · Apr 5 — Hardest Day</div><div class="card-s">175 km · two climbs (263 m + 328 m peak) · 3 flats · nausea · standing 24 km</div></div>
+    <div class="card-b"><canvas id="chartD3" height="200"></canvas></div>
+  </div>
+
+  <div class="ig">
+    <div class="ic r">
+      <div class="ic-l">D3 Structure Revealed</div>
+      <div class="ic-t">Two climbs, not one — 328 m peak AFTER lunch</div>
+      <div class="ic-b">Full Strava stream shows D3 had a first climb to 263 m (nausea + lunch stop at km 79), then resumed and climbed further to 328 m — the highest point of the entire tour, higher than Big Sur's 291 m on D2. Flat tires hit at km 125 on the descent from the 328 m peak. The altitude panel on the D3 chart shows this double-hump clearly.</div>
+      <div class="ic-n r">328 m</div>
+    </div>
+    <div class="ic b">
+      <div class="ic-l">D1 Lunch Gap</div>
+      <div class="ic-t">44-minute stop at km 107 confirmed by GPS gap</div>
+      <div class="ic-b">The D1 Strava stream has a 44-minute gap at t=4.73–4.99 h (km 107). Power drops to 0, HR falls to ~115. The restart shows normal power recovery in ~10 min — fresh enough to recover quickly. Compare to D3 where post-stop HR stayed depressed and power recovery was slower.</div>
+      <div class="ic-n b">44 min</div>
+    </div>
+    <div class="ic a">
+      <div class="ic-l">Temperature Profile</div>
+      <div class="ic-t">D3 peaked at 38°C sensor temp during the major climbs</div>
+      <div class="ic-b">Garmin ambient sensor: D1 peaked at 30°C (afternoon valleys), D2 hit 39°C at Big Sur, D3 peaked 38°C during the 263–328 m climb section. Road surface temps in direct sun are 5–8°C above air temperature. This is where splanchnic blood flow was most suppressed — exactly when nausea onset occurred.</div>
+      <div class="ic-n a">38°C</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== POWER ANALYSIS ===== -->
+<div id="p-power" class="pnl">
+  <div class="note b"><b>Key metric — Pw:HR ratio:</b> Watts per heartbeat. Higher = better aerobic efficiency. D1: 1.007 → D2: 0.993 → D3: 0.898. The −10.8% drop from D1 to D3 is the true decoupling signal. On climbs specifically the gap is larger because you cannot freewheel or shift strategy — gradient forces honest output.</div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="card-h"><div class="card-t">Overall Pw:HR — 3-Day Decoupling</div><div class="card-s">W ÷ bpm · lower = heart working harder per watt</div></div>
+      <div class="card-b"><canvas id="pwhrBar" height="180"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">Avg Power · NP · Variability Index</div><div class="card-s">VI = NP ÷ Avg W · higher VI = more erratic effort</div></div>
+      <div class="card-b"><canvas id="npBar" height="180"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Power by Terrain — Climb vs Flat vs Descent</div><div class="card-s">Avg W on each terrain type · Day 3 climb power is 29 W below Day 1 on same gradients</div></div>
+    <div class="card-b"><canvas id="terrainPw" height="170"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">HR by Terrain — Cardiac Cost of Same Gradient</div><div class="card-s">Higher HR on Day 3 climbs at lower power = cardiac drift + heat + depletion</div></div>
+    <div class="card-b"><canvas id="terrainHr" height="170"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Power vs Grade Scatter — All Data Points, All Days</div><div class="card-s">Each dot = 1 Strava sample. Day 3 cluster shifts left (less power at same gradient)</div></div>
+    <div class="card-b"><canvas id="gradeScatter" height="220"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Segment Pw:HR Ratio — Aerobic Efficiency Across Each Day</div><div class="card-s">5 named segments per day. Declining within a day = within-day decoupling.</div></div>
+    <div class="card-b"><canvas id="segPwhr" height="160"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== GLUCOSE ===== -->
+<div id="p-glucose" class="pnl">
+  <div class="note r"><b>D3 Hour 4 spike to 186 mg/dL explained:</b> Flask carbs pooled in the gut during splanchnic ischemia (heat + slow climbing, no wind). At the lunch stop (km 79), gut blood flow restored and simultaneously Coke was consumed — the combined bolus hit at once. SD at that hour was 28.8 mg/dL (CV 21.3%). D2 equivalent hour SD was 10.5 mg/dL (CV 11.7%). The spike reflects GI absorption failure, not over-fueling.</div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Blood Glucose — Day 2 vs Day 3 by Ride Hour</div><div class="card-s">mg/dL · hourly avg · Dexcom Stelo CGM via Apple Health / Nori. Events annotated.</div></div>
+    <div class="card-b"><canvas id="glucMain" height="230"></canvas></div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="card-h"><div class="card-t">Glucose SD per Hour — Absorption Stability</div><div class="card-s">SD &gt;15 = unstable absorption signal</div></div>
+      <div class="card-b"><canvas id="glucSd" height="160"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">D3 Glucose CV% — Coefficient of Variation</div><div class="card-s">CV = SD ÷ mean × 100. H4 = 21.3% (GI breakdown confirmed)</div></div>
+      <div class="card-b"><canvas id="glucCv" height="160"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Day 3 — Glucose + Power + HR on Same Timeline</div><div class="card-s">Left axis: Power (W) and HR (bpm). Right axis: Glucose (mg/dL). Events annotated.</div></div>
+    <div class="card-b"><canvas id="glucD3Triple" height="230"></canvas></div>
+  </div>
+
+  <div class="ig">
+    <div class="ic g">
+      <div class="ic-l">D2 Reference</div>
+      <div class="ic-t">Day 2 glucose: near-optimal endurance management</div>
+      <div class="ic-b">D2 held 89–128 mg/dL across 10+ hours. The H3 trough (89 mg/dL) was the riskiest moment — borderline low for 108 kg at high output — but the flask rate caught it. CV averaged 11.7% across active hours. This is the benchmark to replicate on Gran Fondo Apr 25.</div>
+      <div class="ic-ref">Coggan and Coyle (1991): optimal exogenous glucose 90–140 mg/dL during sustained endurance exercise. J Appl Physiol.</div>
+      <div class="ic-n g">CV 11%</div>
+    </div>
+    <div class="ic a">
+      <div class="ic-l">Early Warning</div>
+      <div class="ic-t">D3 SD was rising from H1 — 90-min warning missed</div>
+      <div class="ic-b">D3 H1 SD = 17.0, H2 = 7.7, H3 = 9.4, H4 = 28.8. D2 at same hours: 5.6, 11.5, 10.5. The D3 variability trend was distinguishable by H1 — switching to diluted flasks + solid food at H2 would have intercepted the cascade 90 minutes earlier.</div>
+      <div class="ic-ref">Siegmund et al. (2018): rising intra-exercise CGM SD predicts GI event 60–90 min before onset. Eur J Appl Physiol.</div>
+      <div class="ic-n a">+90 min</div>
+    </div>
+    <div class="ic g">
+      <div class="ic-l">Rescue Confirmed</div>
+      <div class="ic-t">Coke + sandwich: glucose stable within 40 min</div>
+      <div class="ic-b">Post-lunch: H5 = 126 mg/dL (SD 9.7), H6 = 122 (SD 7.4), H7 = 100 (SD 5.5). Stabilization confirmed by CGM. Cold Coke: ~110 mOsm/kg, fast gastric emptying vs ~300+ mOsm flask. The decision was correct and the CGM data proves it.</div>
+      <div class="ic-ref">Maughan et al. (1990): cold beverages increase gastric emptying rate ~28%. Eur J Appl Physiol.</div>
+      <div class="ic-n g">40 min</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RECOVERY ===== -->
+<div id="p-recovery" class="pnl">
+  <div class="note r"><b>HRV night of D3: 13 ms.</b> Baseline 59 ms. Suppression −78%. RMSSD &lt;20 ms is the published threshold for non-functional overreaching (NFOR). You are at 13 ms — 35% below that threshold. Recovery requires 10–14 days minimum before any quality training.</div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">HRV Trend — Pre-Tour Through Post-D3</div><div class="card-s">RMSSD ms · Oura Ring. Lines show: baseline (59 ms), warning (35 ms), NFOR threshold (20 ms).</div></div>
+    <div class="card-b"><canvas id="hrvChart" height="190"></canvas></div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="card-h"><div class="card-t">Sleep Architecture — 4 Nights</div><div class="card-s">Total · Deep · REM · hours · Oura Ring</div></div>
+      <div class="card-b"><canvas id="sleepChart" height="190"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">Respiratory Rate + Resting HR</div><div class="card-s">Nocturnal resp rate (br/min) rising = stress accumulation. RHR elevated throughout.</div></div>
+      <div class="card-b"><canvas id="respChart" height="190"></canvas></div>
+    </div>
+  </div>
+
+  <div class="ig">
+    <div class="ic r">
+      <div class="ic-l">HRV 13 ms</div>
+      <div class="ic-t">Non-functional overreaching confirmed</div>
+      <div class="ic-b">RMSSD &lt;20 ms = NFOR by ECSS/ACSM consensus. Performance recovery takes 2+ weeks. Gran Fondo Apr 25 is 20 days away — exactly sufficient IF recovery is structured correctly. Days 1–7: no cycling. Days 8–14: Z2 only, HR cap 125 bpm. Check HRV each morning before riding.</div>
+      <div class="ic-ref">Meeusen et al. (2013): RMSSD &lt;20 ms post-stage = NFOR; 2+ weeks recovery required. ECSS/ACSM consensus statement.</div>
+      <div class="ic-n r">13 ms</div>
+    </div>
+    <div class="ic r">
+      <div class="ic-l">Pre-Tour Sleep Debt</div>
+      <div class="ic-t">5.6h before D1 — the tour started in a hole</div>
+      <div class="ic-b">HRV was already 34.8 ms vs 59 ms baseline before Day 1 began. Sleep 5.6h before a 199 km stage reduces endurance performance 7–11% and impairs glycogen synthesis. Every downstream failure on D3 had this as a root input. The best night of the tour (D2 pre-ride: 7.3h, 120min REM) produced the best-managed stage.</div>
+      <div class="ic-ref">Skein et al. (2011): 6h sleep reduces paced endurance performance 7%. IJSPP.</div>
+      <div class="ic-n r">5.6h</div>
+    </div>
+    <div class="ic a">
+      <div class="ic-l">Respiratory Rate +10.8%</div>
+      <div class="ic-t">13.0 → 14.4 br/min sleeping — 4-night stress marker</div>
+      <div class="ic-b">Nocturnal respiratory rate increases as metabolic clearance load rises. The 1.4 br/min rise over 4 nights exceeds the published 1.0 br/min threshold for overreaching. Respiratory muscles themselves accumulate fatigue, impairing ventilatory efficiency during the next ride. Often ignored — almost always present in over-reached athletes.</div>
+      <div class="ic-ref">Buchheit (2014): nocturnal resp rate increase &gt;1 br/min over 3+ nights = overreaching marker. IJSPP.</div>
+      <div class="ic-n a">+10.8%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOAD & NUTRITION ===== -->
+<div id="p-load" class="pnl">
+  <div class="note a"><b>Body-mass-adjusted carb need at 108 kg:</b> Stage racing requires 8–10g/kg/day = 864–1,080g. Actual intake: D1 ~472g, D2 ~469g, D3 ~310g. Cumulative deficit over 3 days: ~1,341g — roughly 2× the entire muscle glycogen capacity. By D3 morning the body was catabolic before any GI event occurred.</div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="card-h"><div class="card-t">TSS & Intensity Factor — 3-Day Load</div><div class="card-s">TSS at FTP 205 W. IF = NP ÷ FTP. 1,260 total TSS = beyond pro stage race pace.</div></div>
+      <div class="card-b"><canvas id="tssChart" height="180"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">Carb Intake vs Body-Mass Target</div><div class="card-s">g per day · dashed = 8g/kg minimum target (864g at 108 kg)</div></div>
+      <div class="card-b"><canvas id="carbChart" height="180"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-t">Segment Analysis — Power · HR · Pw:HR · Terrain</div><div class="card-s">5 segments per day computed from full-ride Strava streams</div></div>
+    <div class="card-b" style="overflow-x:auto"><table id="segTable">
+      <thead><tr><th>Day</th><th>Segment</th><th>Distance</th><th>Alt Peak</th><th>Net Elev</th><th>Avg W</th><th>Avg HR</th><th>Pw:HR</th><th>Avg Temp</th><th>Note</th></tr></thead>
+      <tbody id="segBody"></tbody>
+    </table></div>
+  </div>
+
+  <div class="cob a">
+    <div class="cob-h">Gran Fondo Apr 25 Protocol — 182 km / 3,105 m</div>
+    <ul>
+      <li><b>Power targets:</b> km 0–50 = max 130 W (IF 0.63). km 50–140 = 140–150 W (IF 0.68–0.73). km 140–182 = up to IF 0.78 by feel. Get a power meter before Apr 25 (Stages left-side for Giant TCR ~$450).</li>
+      <li><b>Carbs:</b> 85 g/hr from H0. If temp above 22°C, dilute flasks 25% and add plain water between feeds. Solid food (rice cake or banana) at km 80–90 regardless of how you feel.</li>
+      <li><b>CGM protocol:</b> Glance every 90 min. If SD feels volatile or you feel "off," switch immediately to diluted flask + solid food. The 90-min early warning is documented from D3 data.</li>
+      <li><b>Cadence floor: 72 rpm on all climbs.</b> Use the 36×34 early. Low cadence compresses the gut and accelerates GI shutdown.</li>
+      <li><b>Morning HRV:</b> Above 45 ms = race normally. 35–45 ms = conservative first 50 km. Below 35 ms = ride at IF 0.60 only — do not race. Tour started at 34.8 ms and every problem followed.</li>
+    </ul>
+  </div>
+
+  <div class="cob r">
+    <div class="cob-h">Recovery Protocol — Days 1–20 Before Gran Fondo</div>
+    <ul>
+      <li><b>Days 1–7 (Apr 6–12):</b> No cycling. Sleep 8–9h/night. Carbs 864g/day (8g/kg). Protein 270g/day (2.5g/kg). HRV target: above 40 ms before resuming training.</li>
+      <li><b>Days 8–14 (Apr 13–19):</b> Z2 only. 60–90 min/session. HR cap 125 bpm. Power cap 110 W. 2–3 sessions. No climbing, no tempo.</li>
+      <li><b>Days 15–18 (Apr 20–23):</b> One 3h Z2 flat ride + one short session with 3×10 min at IF 0.75 (~154 W). Total TSS these 4 days: under 200.</li>
+      <li><b>Apr 24:</b> Rest. 20 min easy spin. 1,080g carbs (10g/kg). 8.5h sleep minimum. Check HRV at 06:00.</li>
+    </ul>
+  </div>
+</div>
+
+</div>
+<script>
+// ============================================================
+// RAW DATA — Strava low-res full-ride (100 pts each)
+// ============================================================
+var d1T=[0,529,1018,1460,1784,2238,2730,3056,3651,4084,4275,4528,4852,5211,5535,6253,6464,6667,6967,7194,7412,7680,7962,8228,8505,8734,8990,9237,9505,9731,10075,10588,10709,11251,11533,11746,11983,12200,12446,12673,12862,13127,13634,13946,14211,14528,14773,15025,15641,15950,16209,16469,16766,17044,19673,19921,20156,20447,20671,20933,21193,21512,21858,22260,22566,22824,23137,23509,23821,24206,24538,24895,25187,25456,25763,26111,26317,26501,26761,27045,27451,27784,27988,28226,28484,28715,29192,29414,29638,29937,30434,30727,31052,31369,31729,32008,32342,32651,33023,33518];
+var d1W=[0,187,654,129,133,216,280,196,172,0,0,0,26,191,268,0,179,127,0,220,266,214,68,145,229,277,132,266,88,174,257,0,0,0,225,264,221,227,323,141,206,199,232,97,311,271,249,235,133,194,294,44,125,184,132,243,305,165,139,0,0,0,0,125,11,389,0,44,198,0,74,0,71,52,120,95,72,0,0,121,383,86,0,138,545,69,136,150,244,149,0,196,212,185,0,91,0,0,55,250];
+var d1H=[93,131,138,157,152,149,129,153,145,136,115,124,135,154,158,130,120,128,129,145,153,140,149,139,155,151,158,156,152,142,162,155,127,151,150,142,156,168,152,160,167,149,137,154,149,154,154,139,162,154,147,143,142,157,149,148,153,157,161,136,140,136,131,156,157,136,129,142,143,130,144,163,125,128,138,153,141,126,133,150,150,139,125,140,145,133,144,144,143,150,138,142,143,149,150,143,122,132,128,139];
+var d1A=[46,6.4,28.2,58.6,51.4,81.2,73,67.8,143,164.2,33.2,9.4,17.6,35.6,36.6,130.2,41.8,14,25.4,17.8,12,9.8,18.8,16.2,27,32.2,41.6,52,59.8,51.2,67.2,127.8,10.4,41,39.4,4.2,14.6,15.2,17.2,24.6,23.2,31.8,10,27,29.2,43.2,32,12.2,47,64.2,54,38.2,27,30,38.6,25.8,28.2,37.8,30.2,27,36,26.6,17.2,26.6,23.4,18.2,19.4,34.4,48.6,34.4,42.8,73.8,47.2,28.6,41,76.4,43,8.6,7.8,5.8,39.4,50.6,14.8,4,8,1.4,1.6,1,4.4,5.6,16,15.4,12,21.6,48.6,36.2,26.8,9.8,6.8,23];
+var d1G=[27.9,0,0,1.9,0,4.3,-1.8,2.8,0.9,-11.4,-4.9,-1.9,3.3,3.6,7.6,-11,2.8,-3.2,-1.9,-1.4,1.2,0.7,0,-0.7,-0.6,1.2,0.5,2.5,0,-0.5,7.6,-6.3,0.7,-7.5,0,1.1,-1.6,0.6,0,0.5,0.5,-0.7,-2.8,-1.3,0,-2.2,0.7,0,-2.5,0,0.7,-6.5,0,-0.7,0.7,-2.1,4.8,-0.6,0.6,-4,-0.7,0,-10.4,-0.7,0,3.2,-1.6,0,0,-2.6,0,-1.7,-2.9,-1.6,-0.7,-0.7,-2,0.4,0.7,-0.8,6.2,-0.5,-3.2,-0.7,-1.5,0.5,0.6,-0.5,2.7,0,-5,-0.8,0,2.1,-3.6,-0.7,-3.4,-4.1,-0.9,5.3];
+var d1Tmp=[20,15,14,14,14,14,16,18,18,19,18,18,18,18,20,20,18,18,20,20,19,20,20,20,21,21,21,21,21,21,22,22,22,24,24,24,24,23,23,24,24,24,28,24,22,21,20,19,21,20,20,20,20,21,30,25,23,23,23,25,25,26,26,29,28,27,27,27,25,26,26,27,25,24,24,25,24,25,26,26,28,30,30,28,27,27,26,27,27,25,27,25,25,24,25,24,24,24,25,27];
+
+var d2T=[0,523,1155,2012,2214,2673,3182,3571,3905,4316,4746,5435,5798,6236,6578,7501,8173,8315,9134,9366,9640,9918,10276,10740,11259,12207,12455,13003,13356,13723,14081,14574,14979,15285,15798,16009,16292,16684,17117,17608,18128,19460,19842,20212,20633,21002,21384,21805,22169,22776,23038,23322,24230,24935,25196,25731,26617,26871,27078,27502,27750,27968,28228,28442,28698,29074,29284,29549,29772,30032,30300,30558,30844,31097,31672,31866,32103,32402,32744,32960,33181,33443,33683,34023,34401,34859,35813,36223,36744,37054,37337,37727,38167,38399,38673,39027,39266,39523,40094,40584];
+var d2W=[166,250,202,0,0,80,233,112,260,390,127,254,60,31,0,272,106,0,195,130,191,159,140,65,232,211,0,228,32,6,190,0,190,0,106,195,208,219,0,0,115,0,189,81,74,0,0,236,67,68,0,216,172,92,0,254,0,56,0,174,137,178,126,109,151,153,148,58,200,254,127,185,219,253,109,153,184,195,106,52,181,124,0,164,139,125,118,239,203,225,205,357,0,149,205,129,353,216,122,0];
+var d2H=[111,126,129,118,114,127,132,130,127,131,131,122,120,129,115,149,138,120,139,126,140,130,130,138,149,148,117,137,136,134,131,123,140,122,134,137,135,141,120,125,143,119,154,125,140,125,133,139,122,136,119,135,142,141,109,160,119,132,137,146,153,156,146,160,139,144,153,157,155,146,154,136,150,143,139,132,147,150,122,123,134,146,137,142,146,132,137,131,147,136,140,146,131,126,141,142,138,143,129,127];
+var d2A=[21.4,12.6,74.4,148.4,34.4,37.6,19.2,29.6,37.8,37.8,47,35.4,30.6,61.2,59.4,105.6,137.2,19,61.4,43.8,33.4,30.4,44.6,79.6,130.6,291.8,191.4,193.2,176.6,183.4,112.8,95.2,90.8,75.4,114.8,77.2,72.8,64,64.2,89.8,109,108.6,54.6,54.2,59.2,41.2,51,69.4,41.2,106.6,63,33.2,150,227,142,163.6,164.6,107.4,31.6,44.6,31.4,8.2,16,19.2,22.8,11.4,13.2,25.6,17.6,19,19.8,12.2,18.6,14.4,84.8,37.2,43.6,68.2,58.8,27,14.8,29.2,26,18,15.4,9.8,14.2,7.2,41.8,11.6,9.4,31.6,44,17.2,26,55,47,44,42.8,55.2];
+var d2G=[0,3.3,4.9,-9.9,0,0,3,-1.3,4.6,2.8,-0.7,1.6,-1.3,-2.6,-2.8,6.5,-1.1,-3.7,-3.6,2.8,1.2,-1.9,2.2,-1.3,6.3,6.7,-6.3,7.3,-0.7,-3,6.2,-5,0.7,-5.1,-4,-3.5,3.9,0.9,-4.1,-0.9,-2.3,-7.1,3.4,-2.9,-2,-4.8,-2.3,2.7,2,-1.7,-5.6,3.5,2,4.9,-4.6,8.3,-4.5,-2.9,-7.7,1.5,2.3,3.4,-2.1,-1.5,0,0.4,0.7,-1.7,0.5,-1.5,0.6,1.8,0.6,1.3,-1.1,-0.5,1.1,4.3,-2.1,2.2,0.5,0.5,-0.6,5.8,0,-1.9,0,-1.5,0.9,-0.6,0,2.9,-6.4,-1.3,1.4,0,-0.5,1.5,0,0];
+var d2Tmp=[22,16,15,18,17,18,20,21,20,21,22,22,22,22,23,25,27,26,27,25,24,25,24,24,26,28,27,27,26,28,29,29,29,27,29,28,28,28,29,31,34,33,31,30,30,29,28,28,30,36,36,34,39,39,36,37,35,31,28,30,27,28,29,28,29,31,29,30,30,28,27,28,27,27,26,27,28,29,30,29,30,30,30,28,26,27,26,24,25,25,24,25,25,25,24,24,24,24,24,24];
+
+var d3T=[0,557,813,1013,1217,1427,1650,1999,2216,2453,2702,2919,3147,3357,3593,3801,4036,4445,4686,4931,5185,5487,5728,5915,6151,6392,6633,6850,7081,7302,7529,7742,8005,8306,8575,8836,9194,9567,9947,10151,10373,10600,10858,11328,12080,12612,12753,12944,13195,13475,15144,15502,15828,16184,16471,16733,17043,17431,17827,18186,18547,18941,19345,19728,20145,20497,21088,21243,21369,22368,22952,23131,23410,23767,23953,24236,24435,24643,24854,25050,25254,26046,26252,26815,27087,27325,27632,27826,28096,28304,29418,29767,29974,30222,30458,30766,31106,31419,31730,32145];
+var d3W=[0,135,117,189,121,126,166,133,88,167,0,295,219,62,156,132,323,134,240,207,171,74,136,124,146,114,134,75,259,127,255,358,155,66,264,0,211,142,141,84,127,0,123,186,159,0,0,0,0,0,62,86,138,143,0,111,198,126,149,173,179,118,179,153,105,112,201,0,126,169,92,0,0,116,248,177,151,117,228,203,152,0,18,150,0,218,94,0,170,94,0,0,332,146,0,218,96,0,48,39];
+var d3H=[108,133,135,142,141,139,142,149,135,125,132,130,141,144,130,133,142,137,127,136,123,132,129,135,142,130,140,141,136,130,134,138,138,125,133,143,143,137,127,132,131,119,123,146,151,121,117,129,136,118,129,131,139,147,128,142,144,147,154,145,136,144,139,147,134,139,150,122,120,141,132,146,126,139,148,151,156,151,132,158,153,126,122,148,134,151,126,122,125,139,163,150,136,127,141,139,130,139,153,152];
+var d3A=[58.2,51.4,40.2,31,27,23.8,26.6,50,28.2,24.6,32.4,10.2,8.8,5,9.4,14.6,29,60.6,35.4,35.4,45.6,66.2,47.2,26.2,29.6,28.8,28.4,25.6,44.8,41,44.4,39.4,48.6,61,71.2,86.6,117.8,145.8,166,139,120.8,104.4,101.2,145,248.8,263.8,175.4,129,104.8,35.8,33,36,40.2,69.4,77.8,70.8,77.2,104.2,130.4,144.2,152.8,169.2,185.6,208.4,237.2,258.4,328.4,228.8,129.4,115.6,112.2,80.8,27.6,47.6,32.6,29.2,32.8,35.8,25.8,27.6,27.8,36.6,15.4,35.2,35.6,39.4,49.2,32,39.4,32.8,40,52.4,29.6,30.6,26.2,31.8,40.4,40.4,42.6,64];
+var d3G=[-34.3,-0.7,0,-0.5,-2,-0.5,0.7,2.7,-1,0.6,0,-3.6,1.4,0,-0.5,1.2,6.9,0,1,3.1,0.7,1,2.1,0,0,-1.5,0.6,-0.6,1.6,0,0,-0.7,0.7,0,1.5,2.5,2.1,0.9,-3,2.3,-1,-0.7,0,3.6,5.4,-7.6,-3.8,-6.3,-1.1,-6.1,-1.4,0.9,0,4.1,-6.2,0,0,4.2,5,2.6,-1,1.4,1,2.8,2.6,4.2,0,-6.8,-2.2,0.7,-3.5,-3.3,1.4,0,2.8,-0.5,0,-3.9,1.6,0,-0.7,-2.4,-0.5,6,-0.6,2.2,-1.7,-2,0,0.8,7.4,-1.3,0,1.3,-0.6,-0.9,1.7,-0.6,0,0];
+var d3Tmp=[24,26,26,25,25,26,27,27,25,24,23,23,23,24,25,25,26,28,29,28,28,29,29,29,29,28,28,28,30,31,31,31,32,32,32,32,33,34,34,33,32,32,33,35,35,38,35,34,33,34,34,32,33,34,34,34,34,35,35,31,32,32,31,32,31,32,34,32,30,33,34,32,30,30,27,27,25,24,25,25,25,27,26,29,27,27,28,26,26,27,27,26,26,25,25,26,26,26,25,25];
+
+function toH(arr){ return arr.map(function(v){ return parseFloat((v/3600).toFixed(3)); }); }
+var d1TH=toH(d1T), d2TH=toH(d2T), d3TH=toH(d3T);
+
+// ============================================================
+// CUSTOM PLUGIN: vertical event lines
+// ============================================================
+var evPlugin={
+  id:'evLines',
+  afterDraw:function(chart){
+    var lines=chart.config.options.evLines;
+    if(!lines||!lines.length) return;
+    var ctx=chart.ctx, xAxis=chart.scales.x;
+    if(!xAxis) return;
+    lines.forEach(function(ev){
+      var xPx=xAxis.getPixelForValue(ev.h);
+      if(xPx<chart.chartArea.left||xPx>chart.chartArea.right) return;
+      ctx.save();
+      ctx.strokeStyle=ev.color;
+      ctx.lineWidth=1.5;
+      ctx.setLineDash([4,3]);
+      ctx.globalAlpha=0.85;
+      ctx.beginPath();
+      ctx.moveTo(xPx,chart.chartArea.top);
+      ctx.lineTo(xPx,chart.chartArea.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha=1;
+      ctx.fillStyle=ev.color;
+      ctx.font='bold 9px system-ui';
+      ctx.save();
+      ctx.translate(xPx+3,chart.chartArea.top+8);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(ev.label,0,0);
+      ctx.restore();
+      ctx.restore();
+    });
+  }
+};
+Chart.register(evPlugin);
+
+// ============================================================
+// SHARED CONFIG
+// ============================================================
+Chart.defaults.color='#64748b';
+Chart.defaults.font.family='system-ui,sans-serif';
+Chart.defaults.font.size=10;
+var GR={color:'#f1f5f9',lineWidth:1};
+var TT={backgroundColor:'#fff',borderColor:'#e2e8f0',borderWidth:1,padding:10,titleColor:'#0f172a',bodyColor:'#475569',titleFont:{size:12,weight:'bold'}};
+
+function makeProfileDs(timeH, watts, hr, alt, evLines, canvasId, htPx){
+  var wDs=timeH.map(function(t,i){ return {x:t,y:watts[i]>0?watts[i]:null}; });
+  var hDs=timeH.map(function(t,i){ return {x:t,y:hr[i]}; });
+  var aDs=timeH.map(function(t,i){ return {x:t,y:alt[i]}; });
+  return new Chart(document.getElementById(canvasId),{
+    type:'line',
+    data:{datasets:[
+      {label:'Power (W)',data:wDs,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,0.06)',borderWidth:1.8,pointRadius:0,tension:0.3,fill:false,yAxisID:'y'},
+      {label:'HR (bpm)',data:hDs,borderColor:'#dc2626',borderWidth:1.5,borderDash:[4,2],pointRadius:0,tension:0.3,fill:false,yAxisID:'y'},
+      {label:'Altitude (m)',data:aDs,borderColor:'rgba(180,140,80,0.6)',backgroundColor:'rgba(180,140,80,0.1)',borderWidth:1,pointRadius:0,tension:0.4,fill:true,yAxisID:'y2'}
+    ]},
+    options:{
+      responsive:true,animation:{duration:500},
+      interaction:{mode:'index',intersect:false},
+      evLines:evLines,
+      plugins:{legend:{display:true,labels:{color:'#475569',boxWidth:10,font:{size:10}}},tooltip:TT},
+      scales:{
+        x:{type:'linear',min:0,grid:GR,title:{display:true,text:'Ride Hour',color:'#64748b'},ticks:{color:'#64748b',maxTicksLimit:12,callback:function(v){return v.toFixed(1)+'h';}}},
+        y:{min:0,max:420,grid:GR,title:{display:true,text:'Power (W) / HR (bpm)',color:'#64748b'},ticks:{color:'#64748b'}},
+        y2:{position:'right',min:0,max:420,grid:{display:false},title:{display:true,text:'Altitude (m)',color:'#b45309'},ticks:{color:'#b45309'}}
+      }
+    }
+  });
+}
+
+makeProfileDs(d1TH,d1W,d1H,d1A,[
+  {h:4.74,label:'Lunch (44 min)',color:'#f97316'}
+],'chartD1');
+
+makeProfileDs(d2TH,d2W,d2H,d2A,[
+  {h:2.99,label:'Glucose trough 89',color:'#dc2626'},
+  {h:5.41,label:'Brief stop',color:'#f97316'}
+],'chartD2');
+
+makeProfileDs(d3TH,d3W,d3H,d3A,[
+  {h:2.5,label:'Nausea onset',color:'#dc2626'},
+  {h:3.36,label:'Lunch stop\n/ Glucose 186',color:'#f97316'},
+  {h:3.53,label:'Resume',color:'#16a34a'},
+  {h:5.86,label:'328 m peak',color:'#b45309'},
+  {h:6.43,label:'Flat 1',color:'#7c3aed'},
+  {h:7.01,label:'Flat 2',color:'#7c3aed'},
+  {h:7.45,label:'Flat 3\nStanding',color:'#7c3aed'}
+],'chartD3');
+
+// ============================================================
+// UTILITY
+// ============================================================
+function avg(arr,s,e,skipZero){
+  var vals=[],v;
+  for(var i=s;i<e&&i<arr.length;i++){
+    v=arr[i];
+    if(skipZero&&v<=0) continue;
+    vals.push(v);
+  }
+  if(!vals.length) return 0;
+  var sum=0; for(var i=0;i<vals.length;i++) sum+=vals[i];
+  return Math.round(sum/vals.length);
+}
+function avgF(arr,s,e){
+  var vals=[]; for(var i=s;i<e&&i<arr.length;i++) vals.push(arr[i]);
+  if(!vals.length) return 0;
+  var sum=0; for(var i=0;i<vals.length;i++) sum+=vals[i];
+  return Math.round(sum/vals.length*10)/10;
+}
+function maxIn(arr,s,e){var m=-999; for(var i=s;i<e&&i<arr.length;i++) if(arr[i]>m) m=arr[i]; return Math.round(m);}
+
+// ============================================================
+// SEGMENT DEFINITIONS & COMPUTATION
+// ============================================================
+var SD={
+  d1:[{n:'SF Descent+Climb',s:0,e:20,km:'0–40'},{n:'Bay Hills',s:20,e:40,km:'40–80'},{n:'Mid Ride+Lunch',s:40,e:55,km:'80–110'},{n:'Afternoon Push',s:55,e:77,km:'110–155'},{n:'Coastal Finish',s:77,e:100,km:'155–199'}],
+  d2:[{n:'Approach Big Sur',s:0,e:20,km:'0–46'},{n:'Big Sur Climb 291m',s:20,e:32,km:'46–74'},{n:'Descent+Flat+Lunch',s:32,e:60,km:'74–138'},{n:'Afternoon Coast',s:60,e:82,km:'138–188'},{n:'Final Approach',s:82,e:100,km:'188–228'}],
+  d3:[{n:'SLO Descent',s:0,e:20,km:'0–35'},{n:'First Climb 263m+Nausea',s:20,e:50,km:'35–88'},{n:'Post-Lunch Climb 328m',s:50,e:72,km:'88–125'},{n:'Flat Tires+Standing',s:70,e:82,km:'123–143'},{n:'Standing Finish',s:82,e:100,km:'143–175'}]
+};
+function getSeg(wA,hA,aA,gA,tA,s,e){
+  var w=avg(wA,s,e,true),h=avg(hA,s,e,true);
+  return{avgW:w,avgH:h,pwhr:h>0?+(w/h).toFixed(3):0,altPeak:maxIn(aA,s,e),netElev:Math.round(aA[Math.min(e-1,99)]-aA[s]),avgG:avgF(gA,s,e),avgT:avgF(tA,s,e)};
+}
+
+// Build segment table
+var tbody=document.getElementById('segBody');
+var dayDefs=[
+  {key:'d1',w:d1W,h:d1H,a:d1A,g:d1G,t:d1Tmp,cls:'c1',lbl:'Day 1'},
+  {key:'d2',w:d2W,h:d2H,a:d2A,g:d2G,t:d2Tmp,cls:'c2',lbl:'Day 2'},
+  {key:'d3',w:d3W,h:d3H,a:d3A,g:d3G,t:d3Tmp,cls:'c3',lbl:'Day 3'}
+];
+var noteMap={d1_2:'<span class="bx b-a">Lunch 44min</span>',d3_1:'<span class="bx b-r">Nausea+stop</span>',d3_2:'<span class="bx b-r">Climbs to 328m</span>',d3_3:'<span class="bx b-r">Flat tires</span>',d3_4:'<span class="bx b-r">Standing 24km</span>'};
+dayDefs.forEach(function(dd){
+  SD[dd.key].forEach(function(seg,si){
+    var s=getSeg(dd.w,dd.h,dd.a,dd.g,dd.t,seg.s,seg.e);
+    var note=noteMap[dd.key+'_'+si]||'';
+    var tr=document.createElement('tr');
+    if(dd.key==='d3'&&(si===1||si===2||si===3||si===4)) tr.className='hl-r';
+    tr.innerHTML='<td class="'+dd.cls+' lb">'+(si===0?dd.lbl:'')+'</td>'
+      +'<td class="lb">'+seg.n+'</td><td>'+seg.km+'</td>'
+      +'<td>'+s.altPeak+'m</td>'
+      +'<td class="'+(s.netElev>0?'red':'grn')+'">'+(s.netElev>0?'+':'')+s.netElev+'m</td>'
+      +'<td class="'+(dd.key==='d3'&&s.avgW<130?'red':dd.cls)+'">'+s.avgW+'W</td>'
+      +'<td>'+s.avgH+' bpm</td>'
+      +'<td class="'+(s.pwhr<0.90?'red':s.pwhr>1.05?'grn':'')+'">'+s.pwhr+'</td>'
+      +'<td class="'+(s.avgT>30?'red':s.avgT>25?'amb':'')+'">'+s.avgT+'°C</td>'
+      +'<td>'+note+'</td>';
+    tbody.appendChild(tr);
+  });
+});
+
+// Segment Pw:HR chart (line)
+var s1=[],s2=[],s3=[];
+SD.d1.forEach(function(seg){var s=getSeg(d1W,d1H,d1A,d1G,d1Tmp,seg.s,seg.e);s1.push(s.pwhr);});
+SD.d2.forEach(function(seg){var s=getSeg(d2W,d2H,d2A,d2G,d2Tmp,seg.s,seg.e);s2.push(s.pwhr);});
+SD.d3.forEach(function(seg){var s=getSeg(d3W,d3H,d3A,d3G,d3Tmp,seg.s,seg.e);s3.push(s.pwhr);});
+new Chart(document.getElementById('segPwhr'),{
+  type:'line',
+  data:{labels:['Seg 1','Seg 2','Seg 3','Seg 4','Seg 5'],datasets:[
+    {label:'Day 1',data:s1,borderColor:'#0891b2',backgroundColor:'#0891b220',borderWidth:2,pointRadius:5,pointBackgroundColor:'#0891b2',tension:0.3},
+    {label:'Day 2',data:s2,borderColor:'#ea580c',backgroundColor:'#ea580c20',borderWidth:2,pointRadius:5,pointBackgroundColor:'#ea580c',tension:0.3},
+    {label:'Day 3',data:s3,borderColor:'#7c3aed',backgroundColor:'#7c3aed20',borderWidth:2,pointRadius:5,pointBackgroundColor:'#7c3aed',tension:0.3}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0.6,max:1.5,title:{display:true,text:'Pw:HR (W/bpm)',color:'#64748b'},ticks:{color:'#64748b',callback:function(v){return v.toFixed(2);}}}}}
+});
+
+// ============================================================
+// POWER ANALYSIS CHARTS
+// ============================================================
+new Chart(document.getElementById('pwhrBar'),{
+  type:'bar',
+  data:{labels:['Day 1 SF','Day 2 Big Sur','Day 3 SLO'],datasets:[
+    {label:'Pw:HR (W/bpm)',data:[1.007,0.993,0.898],backgroundColor:['rgba(8,145,178,.15)','rgba(234,88,12,.15)','rgba(124,58,237,.15)'],borderColor:['#0891b2','#ea580c','#7c3aed'],borderWidth:2,borderRadius:5}
+  ]},
+  options:{responsive:true,animation:{duration:500},plugins:{legend:{display:false},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0.8,max:1.1,title:{display:true,text:'W / bpm',color:'#64748b'},ticks:{color:'#64748b',callback:function(v){return v.toFixed(3);}}}}}
+});
+
+new Chart(document.getElementById('npBar'),{
+  type:'bar',
+  data:{labels:['Day 1','Day 2','Day 3'],datasets:[
+    {label:'Avg W',data:[145,134,123],backgroundColor:['rgba(8,145,178,.12)','rgba(234,88,12,.12)','rgba(124,58,237,.12)'],borderColor:['#0891b2','#ea580c','#7c3aed'],borderWidth:1.5,borderRadius:4},
+    {label:'NP (W)',data:[154,131,130],backgroundColor:'transparent',borderColor:['#0891b2','#ea580c','#7c3aed'],borderWidth:2.5,borderRadius:4,borderSkipped:false,type:'bar'}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:100,max:175,title:{display:true,text:'Watts',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+// Terrain analysis
+function terrainStats(wA,hA,gA){
+  var cW=[],cH=[],fW=[],fH=[],dW=[],dH=[];
+  for(var i=0;i<wA.length;i++){
+    if(wA[i]<=0||hA[i]<=0) continue;
+    if(gA[i]>2){cW.push(wA[i]);cH.push(hA[i]);}
+    else if(gA[i]<-2){dW.push(wA[i]);dH.push(hA[i]);}
+    else{fW.push(wA[i]);fH.push(hA[i]);}
+  }
+  function m(a){if(!a.length)return 0;var s=0;for(var i=0;i<a.length;i++)s+=a[i];return Math.round(s/a.length);}
+  return{cW:m(cW),cH:m(cH),fW:m(fW),fH:m(fH),dW:m(dW),dH:m(dH)};
+}
+var t1=terrainStats(d1W,d1H,d1G);
+var t2=terrainStats(d2W,d2H,d2G);
+var t3=terrainStats(d3W,d3H,d3G);
+var tLabels=['Climb (>2%)','Flat (-2 to 2%)','Descent (<-2%)'];
+function barDs(label,data,col){return{label:label,data:data,backgroundColor:col+'20',borderColor:col,borderWidth:1.5,borderRadius:4};}
+new Chart(document.getElementById('terrainPw'),{
+  type:'bar',data:{labels:tLabels,datasets:[barDs('Day 1',[t1.cW,t1.fW,t1.dW],'#0891b2'),barDs('Day 2',[t2.cW,t2.fW,t2.dW],'#ea580c'),barDs('Day 3',[t3.cW,t3.fW,t3.dW],'#7c3aed')]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0,max:300,title:{display:true,text:'Avg Power (W)',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+new Chart(document.getElementById('terrainHr'),{
+  type:'bar',data:{labels:tLabels,datasets:[barDs('Day 1',[t1.cH,t1.fH,t1.dH],'#0891b2'),barDs('Day 2',[t2.cH,t2.fH,t2.dH],'#ea580c'),barDs('Day 3',[t3.cH,t3.fH,t3.dH],'#7c3aed')]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:100,max:175,title:{display:true,text:'Avg HR (bpm)',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+// Grade scatter
+var gs1=[],gs2=[],gs3=[];
+for(var i=0;i<100;i++){
+  if(d1W[i]>0) gs1.push({x:d1G[i],y:d1W[i]});
+  if(d2W[i]>0) gs2.push({x:d2G[i],y:d2W[i]});
+  if(d3W[i]>0) gs3.push({x:d3G[i],y:d3W[i]});
+}
+new Chart(document.getElementById('gradeScatter'),{
+  type:'scatter',
+  data:{datasets:[
+    {label:'Day 1',data:gs1,backgroundColor:'rgba(8,145,178,.35)',borderColor:'#0891b2',pointRadius:5,pointHoverRadius:7},
+    {label:'Day 2',data:gs2,backgroundColor:'rgba(234,88,12,.35)',borderColor:'#ea580c',pointRadius:5,pointHoverRadius:7},
+    {label:'Day 3',data:gs3,backgroundColor:'rgba(124,58,237,.35)',borderColor:'#7c3aed',pointRadius:5,pointHoverRadius:7}
+  ]},
+  options:{responsive:true,animation:{duration:500},plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:{...TT,callbacks:{label:function(ctx){return ctx.dataset.label+': grade '+ctx.raw.x+'%  '+ctx.raw.y+'W';}}}},
+    scales:{x:{grid:GR,min:-12,max:12,title:{display:true,text:'Grade (%)',color:'#64748b'},ticks:{color:'#64748b'}},
+      y:{grid:GR,min:0,max:700,title:{display:true,text:'Power (W)',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+// ============================================================
+// GLUCOSE CHARTS — label-based for reliability
+// ============================================================
+var HLABELS=['H0','H1','H2','H3','H4','H5','H6','H7','H8','H9','H10','H11'];
+var D2GY=[107,104,96,89,96,100,105,115,107,115,128,122];
+var D3GY=[102,117,107,120,135,126,122,100,null,null,null,null];
+var D2SD=[18.6,5.6,11.5,10.5,10.8,4.0,10.5,5.6,9.4,10.3,null,null];
+var D3SD=[7.1,17.0,7.7,9.4,28.8,9.7,7.4,5.5,null,null,null,null];
+var D3CV=D3GY.map(function(v,i){return v&&D3SD[i]?Math.round(D3SD[i]/v*100*10)/10:null;});
+
+// Glucose plugin for vertical event lines (label-based — use index, not value)
+var glucPlugin={
+  id:'glucEv',
+  afterDraw:function(chart){
+    var evs=chart.config.options.glucEvs;
+    if(!evs||!evs.length) return;
+    var ctx=chart.ctx;
+    evs.forEach(function(ev){
+      var xPx=chart.scales.x.getPixelForValue(ev.idx);
+      if(xPx===undefined||xPx===null) return;
+      ctx.save();
+      ctx.strokeStyle=ev.color;
+      ctx.lineWidth=1.5;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath();
+      ctx.moveTo(xPx,chart.chartArea.top);
+      ctx.lineTo(xPx,chart.chartArea.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle=ev.color;
+      ctx.font='bold 9px system-ui';
+      ctx.save();
+      ctx.translate(xPx+3,chart.chartArea.top+8);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(ev.label,0,0);
+      ctx.restore();
+      ctx.restore();
+    });
+  }
+};
+Chart.register(glucPlugin);
+
+// Main glucose comparison chart
+new Chart(document.getElementById('glucMain'),{
+  type:'line',
+  data:{
+    labels:HLABELS,
+    datasets:[
+      {label:'Day 2 (reference)',data:D2GY,borderColor:'#ea580c',backgroundColor:'rgba(234,88,12,0.06)',borderWidth:2,borderDash:[5,3],pointRadius:5,pointBackgroundColor:'#ea580c',tension:0.35,fill:true},
+      {label:'Day 3',data:D3GY,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.06)',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#7c3aed',tension:0.35,fill:true},
+      {label:'D3 spike max 186',data:[null,null,null,null,186,null,null,null,null,null,null,null],borderColor:'#dc2626',backgroundColor:'#dc2626',borderWidth:0,pointRadius:[0,0,0,0,11,0,0,0,0,0,0,0],pointStyle:'triangle',showLine:false},
+      {label:'D2 trough min 89',data:[null,null,null,89,null,null,null,null,null,null,null,null],borderColor:'#b45309',backgroundColor:'#b45309',borderWidth:0,pointRadius:[0,0,0,8,0,0,0,0,0,0,0,0],pointStyle:'rectRot',showLine:false},
+      {label:'Target floor 90',data:[90,90,90,90,90,90,90,90,90,90,90,90],borderColor:'rgba(220,38,38,0.25)',borderWidth:1,borderDash:[2,4],pointRadius:0,showLine:true},
+      {label:'Target ceiling 140',data:[140,140,140,140,140,140,140,140,140,140,140,140],borderColor:'rgba(22,163,74,0.25)',borderWidth:1,borderDash:[2,4],pointRadius:0,showLine:true}
+    ]
+  },
+  options:{
+    responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    glucEvs:[
+      {idx:3,label:'D2 trough 89',color:'#b45309'},
+      {idx:4,label:'D3 nausea+spike',color:'#dc2626'},
+      {idx:5,label:'Coke rescue',color:'#16a34a'}
+    ],
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10,font:{size:10}}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:60,max:200,title:{display:true,text:'Glucose (mg/dL)',color:'#64748b'},ticks:{color:'#64748b'}}}
+  }
+});
+
+// SD chart
+new Chart(document.getElementById('glucSd'),{
+  type:'bar',
+  data:{labels:HLABELS,datasets:[
+    {label:'Day 2 SD',data:D2SD,backgroundColor:'rgba(234,88,12,0.18)',borderColor:'#ea580c',borderWidth:1.5,borderRadius:3},
+    {label:'Day 3 SD',data:D3SD,backgroundColor:'rgba(124,58,237,0.18)',borderColor:'#7c3aed',borderWidth:1.5,borderRadius:3}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:{...TT,callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.raw+(ctx.raw>15?' *** unstable':'');}}}},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0,max:35,title:{display:true,text:'SD mg/dL',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+// CV chart
+new Chart(document.getElementById('glucCv'),{
+  type:'bar',
+  data:{labels:HLABELS,datasets:[
+    {label:'Day 3 CV%',data:D3CV,backgroundColor:D3CV.map(function(v){return v&&v>15?'rgba(220,38,38,0.25)':'rgba(124,58,237,0.18)';}),borderColor:D3CV.map(function(v){return v&&v>15?'#dc2626':'#7c3aed';}),borderWidth:1.5,borderRadius:3}
+  ]},
+  options:{responsive:true,animation:{duration:500},
+    plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:function(ctx){return 'CV: '+ctx.raw+'%'+(ctx.raw>15?' (unstable)':'');},afterLabel:function(ctx){return ctx.parsed.y>15?'Action: switch to solid food':'';}}}},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0,max:35,title:{display:true,text:'CV %',color:'#64748b'},ticks:{color:'#64748b',callback:function(v){return v+'%';}}}}}
+});
+
+// D3 Triple: glucose + power + HR
+var D3_PW_DATA=d3TH.map(function(t,i){return{x:t,y:d3W[i]>0?d3W[i]:null};});
+var D3_HR_DATA=d3TH.map(function(t,i){return{x:t,y:d3H[i]};});
+var D3_GLC_DATA=[{x:0,y:102},{x:1,y:117},{x:2,y:107},{x:3,y:120},{x:4,y:135},{x:5,y:126},{x:6,y:122},{x:7,y:100}];
+new Chart(document.getElementById('glucD3Triple'),{
+  type:'line',
+  data:{datasets:[
+    {label:'Power (W)',data:D3_PW_DATA,borderColor:'#2563eb',borderWidth:1.8,pointRadius:0,tension:0.3,fill:false,yAxisID:'y'},
+    {label:'HR (bpm)',data:D3_HR_DATA,borderColor:'#dc2626',borderDash:[4,2],borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,yAxisID:'y'},
+    {label:'Glucose mg/dL (hourly)',data:D3_GLC_DATA,borderColor:'#059669',backgroundColor:'rgba(5,150,105,0.1)',borderWidth:3,pointRadius:7,pointBackgroundColor:'#059669',tension:0.35,fill:true,yAxisID:'y2'}
+  ]},
+  options:{
+    responsive:true,animation:{duration:500},
+    interaction:{mode:'index',intersect:false},
+    evLines:[
+      {h:3.36,label:'Lunch+Spike',color:'#f97316'},
+      {h:5.86,label:'328m peak',color:'#b45309'},
+      {h:6.43,label:'Flat 1',color:'#7c3aed'}
+    ],
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{
+      x:{type:'linear',min:0,max:9,grid:GR,title:{display:true,text:'Ride Hour',color:'#64748b'},ticks:{color:'#64748b',callback:function(v){return v+'h';}}},
+      y:{min:0,max:420,grid:GR,title:{display:true,text:'Power (W) / HR (bpm)',color:'#64748b'},ticks:{color:'#64748b'}},
+      y2:{position:'right',min:60,max:210,grid:{display:false},title:{display:true,text:'Glucose (mg/dL)',color:'#059669'},ticks:{color:'#059669'}}
+    }
+  }
+});
+
+// ============================================================
+// RECOVERY CHARTS
+// ============================================================
+var HRV_LABELS=['Apr 2\npre-D1','Apr 3\npre-D2','Apr 4\npre-D3','Apr 5\nnight','Apr 6\nmorn'];
+var HRV_DATA=[34.8,29.6,30.6,13.0,16.7];
+new Chart(document.getElementById('hrvChart'),{
+  type:'line',
+  data:{labels:HRV_LABELS,datasets:[
+    {label:'HRV RMSSD (ms)',data:HRV_DATA,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.08)',borderWidth:2.5,pointRadius:7,pointBackgroundColor:HRV_DATA.map(function(v){return v<20?'#dc2626':v<35?'#f59e0b':'#7c3aed';}),tension:0.3,fill:true},
+    {label:'Baseline 59ms',data:[59,59,59,59,59],borderColor:'rgba(22,163,74,0.5)',borderDash:[5,3],borderWidth:1.5,pointRadius:0},
+    {label:'Warning 35ms',data:[35,35,35,35,35],borderColor:'rgba(245,158,11,0.6)',borderDash:[3,2],borderWidth:1.5,pointRadius:0},
+    {label:'NFOR threshold 20ms',data:[20,20,20,20,20],borderColor:'rgba(220,38,38,0.6)',borderDash:[2,2],borderWidth:1.5,pointRadius:0}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0,max:70,title:{display:true,text:'HRV RMSSD (ms)',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+var SL_LABELS=['Pre-D1\n(Apr 2)','Pre-D2\n(Apr 3)','Pre-D3\n(Apr 4)','Post-D3\n(Apr 5-6)'];
+new Chart(document.getElementById('sleepChart'),{
+  type:'bar',
+  data:{labels:SL_LABELS,datasets:[
+    {label:'Total (h)',data:[5.58,7.33,6.5,5.75],backgroundColor:['rgba(234,88,12,.15)','rgba(22,163,74,.2)','rgba(245,158,11,.15)','rgba(220,38,38,.15)'],borderColor:['#ea580c','#16a34a','#f59e0b','#dc2626'],borderWidth:1.5,borderRadius:4},
+    {label:'Deep (h)',data:[0.92,1.25,1.08,1.0],backgroundColor:'rgba(37,99,235,0.3)',borderColor:'#2563eb',borderWidth:1,borderRadius:4},
+    {label:'REM (h)',data:[1.33,2.0,1.5,0.92],backgroundColor:'rgba(124,58,237,0.3)',borderColor:'#7c3aed',borderWidth:1,borderRadius:4}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0,max:9,title:{display:true,text:'Hours',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+var RESP_LABELS=['Apr 2','Apr 3','Apr 4','Apr 6'];
+new Chart(document.getElementById('respChart'),{
+  type:'line',
+  data:{labels:RESP_LABELS,datasets:[
+    {label:'Resp Rate (br/min)',data:[13.0,13.25,14.0,14.375],borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,0.08)',borderWidth:2.5,pointRadius:6,pointBackgroundColor:'#0891b2',tension:0.3,fill:true,yAxisID:'y'},
+    {label:'Resting HR (bpm)',data:[null,97,97,null],borderColor:'#dc2626',borderDash:[4,2],borderWidth:2,pointRadius:6,pointBackgroundColor:'#dc2626',tension:0.3,spanGaps:true,yAxisID:'y2'}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},
+      y:{grid:GR,min:12,max:16,title:{display:true,text:'Resp Rate (br/min)',color:'#0891b2'},ticks:{color:'#0891b2',callback:function(v){return v.toFixed(1);}}},
+      y2:{position:'right',min:80,max:120,grid:{display:false},title:{display:true,text:'RHR (bpm)',color:'#dc2626'},ticks:{color:'#dc2626'}}}}
+});
+
+// ============================================================
+// LOAD & NUTRITION CHARTS
+// ============================================================
+new Chart(document.getElementById('tssChart'),{
+  type:'bar',
+  data:{labels:['Day 1','Day 2','Day 3'],datasets:[
+    {label:'TSS',data:[438,465,357],backgroundColor:['rgba(8,145,178,.15)','rgba(234,88,12,.15)','rgba(124,58,237,.15)'],borderColor:['#0891b2','#ea580c','#7c3aed'],borderWidth:2,borderRadius:5,yAxisID:'y'},
+    {label:'IF',data:[0.73,0.68,0.68],backgroundColor:'transparent',borderColor:'#64748b',type:'line',pointRadius:7,pointBackgroundColor:'#64748b',borderWidth:2,yAxisID:'y2'}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:{...TT,callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.raw;}}}},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},
+      y:{grid:GR,min:0,max:550,title:{display:true,text:'TSS',color:'#64748b'},ticks:{color:'#64748b'}},
+      y2:{position:'right',min:0.5,max:0.9,grid:{display:false},title:{display:true,text:'IF',color:'#64748b'},ticks:{color:'#64748b',callback:function(v){return v.toFixed(2);}}}}}
+});
+
+new Chart(document.getElementById('carbChart'),{
+  type:'bar',
+  data:{labels:['Day 1','Day 2','Day 3'],datasets:[
+    {label:'Actual carbs (g)',data:[472,469,310],backgroundColor:['rgba(8,145,178,.2)','rgba(234,88,12,.2)','rgba(220,38,38,.2)'],borderColor:['#0891b2','#ea580c','#dc2626'],borderWidth:2,borderRadius:5},
+    {label:'Target 8g/kg (864g)',data:[864,864,864],borderColor:'rgba(220,38,38,0.5)',borderWidth:1.5,borderDash:[4,3],type:'line',pointRadius:0,fill:false}
+  ]},
+  options:{responsive:true,animation:{duration:500},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#475569',boxWidth:10}},tooltip:TT},
+    scales:{x:{grid:GR,ticks:{color:'#64748b'}},y:{grid:GR,min:0,max:1000,title:{display:true,text:'Carbs (g)',color:'#64748b'},ticks:{color:'#64748b'}}}}
+});
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function sw(name){
+  var tabs=document.querySelectorAll('.tab');
+  var pnls=document.querySelectorAll('.pnl');
+  for(var i=0;i<tabs.length;i++) tabs[i].classList.remove('on');
+  for(var i=0;i<pnls.length;i++) pnls[i].classList.remove('on');
+  document.querySelector('[onclick="sw(\''+name+'\')"]').classList.add('on');
+  document.getElementById('p-'+name).classList.add('on');
+}
+// URL param deep-link: ?tab=power|glucose|recovery|load|profiles
+(function(){
+  var valid=['profiles','power','glucose','recovery','load'];
+  var tab=new URLSearchParams(window.location.search).get('tab');
+  if(tab&&valid.indexOf(tab)!==-1) sw(tab);
+})();
+</script>
+</body>
+</html>
